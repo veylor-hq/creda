@@ -1,4 +1,6 @@
-from fastapi import Depends, FastAPI, APIRouter, HTTPException
+from re import A
 
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from fastapi.routing import APIRoute
 
-api_router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api")

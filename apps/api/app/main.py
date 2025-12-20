@@ -1,13 +1,15 @@
-from datetime import time
 import os
 from asyncio import run
-from beanie import init_beanie
 from contextlib import asynccontextmanager
-from fastapi import Depends, FastAPI, APIRouter, HTTPException
+from datetime import time
+
+from beanie import init_beanie
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.database import db
-from app.core.config import config
+
 from api.router import router as api_router
+from app.core.config import config
+from app.core.database import db
 from app.core.email import send_email
 from app.core.jwt import FastJWT
 
@@ -38,9 +40,10 @@ def get_application():
 
 app = get_application()
 
+
 # health check
 @app.get("/health")
-async def health():   
+async def health():
     return {"status": "ok"}
 
 
