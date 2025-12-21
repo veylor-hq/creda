@@ -34,11 +34,7 @@ def get_application():
 
     _app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:3000",
-            "https://creda.ihorsavenko.com",
-            # Move to env variable later
-        ],
+        allow_origins=config.BACKEND_CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
