@@ -136,6 +136,9 @@ async def signin_event(payload: AuthSchema, response: Response):
     if not user or not verify_password(payload.password, user.password):
         raise HTTPException(status_code=401, detail="Bad email or password")
 
+    if not user.email_verified:
+        raise HTTPException(status_code=401, detail="Email not verified")
+
     jwt_token = await FastJWT().encode_access(
         data={
             "id": str(user.id),
