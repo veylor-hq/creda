@@ -1,5 +1,8 @@
-import { ComponentExample } from "@/components/component-example";
+"use client"
+import { useRouter } from "next/navigation"
+
 
 export default function Page() {
-return <ComponentExample />;
+    const router = useRouter()
+    router.push('/profile')
 }

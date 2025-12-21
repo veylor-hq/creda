@@ -170,5 +170,8 @@ async def logout_event(response: Response):
     response.delete_cookie(
         key="access_token",
         path="/",
+        httponly=True,
+        secure=False,
+        samesite="lax",
     )
     return {"ok": True}

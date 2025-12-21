@@ -45,7 +45,7 @@ export function SigninForm({ className, ...props }: React.ComponentProps<"div">)
     )
 
     if (response.ok) {
-      router.push('/profile')
+      router.push('/dashboard')
     } else {
       const data = await response.json()
       setErrorMessage(data.detail || 'An error occurred during signin.')
