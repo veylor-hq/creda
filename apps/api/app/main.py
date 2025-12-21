@@ -36,6 +36,8 @@ def get_application():
         CORSMiddleware,
         allow_origins=[
             "http://localhost:3000",
+            "https://creda.ihorsavenko.com",
+            # Move to env variable later
         ],
         allow_credentials=True,
         allow_methods=["*"],
