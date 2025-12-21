@@ -1,6 +1,6 @@
 from app.core.config import config
-import aiosmtplib
 from email.message import EmailMessage
+import aiosmtplib
 from typing import Optional
 
 
@@ -10,13 +10,16 @@ async def send_email(
     body: str,
     sender: Optional[str] = None,
 ):
-    """
-    Send an email using SMTP (works with Mailpit, Mailhog, or real providers).
-    """
-    if not config.SMTP_HOST or not config.SMTP_PORT or not config.SMTP_SENDER:
-        print("SMTP is not configured, skipping email sending.")
-        # TODO: add logging
+    if not all([
+        config.SMTP_HOST,
+        config.SMTP_PORT,
+        config.SMTP_USER,
+        config.SMTP_PASSWORD,
+        config.SMTP_SENDER,
+    ]):
+        print("SMTP is not fully configured, skipping email sending.")
         return
+
     message = EmailMessage()
     message["From"] = sender or config.SMTP_SENDER
     message["To"] = to
@@ -29,6 +32,7 @@ async def send_email(
         port=config.SMTP_PORT,
         username=config.SMTP_USER,
         password=config.SMTP_PASSWORD,
-        start_tls=config.START_TLS,
-        use_tls=config.USE_TLS,
+        start_tls=True if config.START_TLS and config.SMTP_PORT == 587 else False,
+        use_tls=True if config.USE_TLS and config.SMTP_PORT == 465 else False,
+        timeout=10,
     )
