@@ -34,8 +34,10 @@ export function SigninForm({ className, ...props }: React.ComponentProps<"div">)
     const email = formData.get('email')
     const password = formData.get('password')
 
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/signin`,
+      `${API_URL}/api/auth/signin`,
       {
         method: 'POST',
         credentials: 'include',

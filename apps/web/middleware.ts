@@ -14,7 +14,8 @@ export function middleware(request: NextRequest) {
   )
 
   const isProtected = pathname.startsWith('/dashboard') ||
-                      pathname.startsWith('/profile')
+                      pathname.startsWith('/profile') ||
+                      pathname.startsWith('/logout')
 
   if (!token && isProtected) {
     return NextResponse.redirect(
