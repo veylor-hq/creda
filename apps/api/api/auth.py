@@ -173,11 +173,15 @@ async def verify_event(request: Request):
 
 @auth_router.post("/logout")
 async def logout_event(response: Response):
+    is_prod = config.ENV == "production"
+
     response.delete_cookie(
         key="access_token",
         path="/",
+        domain=".ihorsavenko.com" if is_prod else None,
+        secure=is_prod,
+        samesite="none" if is_prod else "lax",
         httponly=True,
-        secure=True,
-        samesite="lax",
     )
+
     return {"ok": True}
