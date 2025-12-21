@@ -5,6 +5,7 @@ from datetime import time
 
 from beanie import init_beanie
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from models.models import OTPActivationModel, User, Workspace
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.router import router as api_router
@@ -18,7 +19,11 @@ from app.core.jwt import FastJWT
 async def lifespan(app: FastAPI):
     await init_beanie(
         database=db,
-        document_models=[],
+        document_models=[
+            User,
+            Workspace,
+            OTPActivationModel,
+        ],
     )
 
     yield
