@@ -14,6 +14,7 @@ async def send_email(
     Send an email using SMTP (works with Mailpit, Mailhog, or real providers).
     """
     if not config.SMTP_HOST or not config.SMTP_PORT or not config.SMTP_SENDER:
+        print(not config.SMTP_HOST, not config.SMTP_PORT, not config.SMTP_SENDER)
         print("SMTP is not configured, skipping email sending.")
         # TODO: add logging
         return
