@@ -5,6 +5,21 @@ from models.models import User, Workspace
 
 workspace_router = APIRouter(prefix="/workspace")
 
+@workspace_router.get("/")
+async def list_workspaces(
+    user: User = Depends(FastJWT().login_required),
+):
+    workspaces = await Workspace.find(
+        Workspace.members.id == user.id
+    ).to_list()
+
+    return [
+        {
+            "id": str(workspace.id),
+            "name": workspace.name,
+        }
+        for workspace in workspaces
+    ]
 
 @workspace_router.get("/get_workspace")
 async def get_default_workspace(

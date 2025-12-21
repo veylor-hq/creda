@@ -1,18 +1,15 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+} from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,14 +18,23 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import {
   Item,
   ItemContent,
   ItemDescription,
   ItemMedia,
   ItemTitle,
-} from '@/components/ui/item'
+} from "@/components/ui/item"
 import {
   Sidebar,
   SidebarContent,
@@ -41,158 +47,107 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
-} from '@/components/ui/sidebar'
+} from "@/components/ui/sidebar"
+import { CustomersTable } from "@/components/customers-table"
+import { DashboardBlankState } from "@/components/dashboard-blank"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { ComputerTerminalIcon, RoboticIcon, BookOpen02Icon, Settings05Icon, CropIcon, PieChartIcon, MapsIcon, UnfoldMoreIcon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
+import {
+  LayoutIcon,
+  UnfoldMoreIcon,
+  UserIcon,
+} from "@hugeicons/core-free-icons"
+
+type AppTabId = "dashboard" | "customers"
+
+type AppTab = {
+  id: AppTabId
+  label: string
+  icon: React.ReactNode
+  component: React.ComponentType
+}
+
+type WorkspaceOption = {
+  id: string
+  name: string
+}
+
+const tabs: AppTab[] = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: <HugeiconsIcon icon={LayoutIcon} strokeWidth={2} />,
+    component: DashboardBlankState,
+  },
+  {
+    id: "customers",
+    label: "Customers",
+    icon: <HugeiconsIcon icon={UserIcon} strokeWidth={2} />,
+    component: CustomersTable,
+  },
+]
 
 export function SidebarIconLayout() {
+  const router = useRouter()
   const data = {
     user: {
       name: "shadcn",
       email: "m@example.com",
       avatar: "/avatars/shadcn.jpg",
     },
-    teams: [
-      {
-        name: "Acme Inc",
-        plan: "Enterprise",
-      },
-      {
-        name: "Acme Corp.",
-        plan: "Startup",
-      },
-      {
-        name: "Evil Corp.",
-        plan: "Free",
-      },
-    ],
-    navMain: [
-      {
-        title: "Playground",
-        url: "#",
-        icon: (
-          <HugeiconsIcon icon={ComputerTerminalIcon} strokeWidth={2} />
-        ),
-        isActive: true,
-        items: [
-          {
-            title: "History",
-            url: "#",
-          },
-          {
-            title: "Starred",
-            url: "#",
-          },
-          {
-            title: "Settings",
-            url: "#",
-          },
-        ],
-      },
-      {
-        title: "Models",
-        url: "#",
-        icon: (
-          <HugeiconsIcon icon={RoboticIcon} strokeWidth={2} />
-        ),
-        items: [
-          {
-            title: "Genesis",
-            url: "#",
-          },
-          {
-            title: "Explorer",
-            url: "#",
-          },
-          {
-            title: "Quantum",
-            url: "#",
-          },
-        ],
-      },
-      {
-        title: "Documentation",
-        url: "#",
-        icon: (
-          <HugeiconsIcon icon={BookOpen02Icon} strokeWidth={2} />
-        ),
-        items: [
-          {
-            title: "Introduction",
-            url: "#",
-          },
-          {
-            title: "Get Started",
-            url: "#",
-          },
-          {
-            title: "Tutorials",
-            url: "#",
-          },
-          {
-            title: "Changelog",
-            url: "#",
-          },
-        ],
-      },
-      {
-        title: "Settings",
-        url: "#",
-        icon: (
-          <HugeiconsIcon icon={Settings05Icon} strokeWidth={2} />
-        ),
-        items: [
-          {
-            title: "General",
-            url: "#",
-          },
-          {
-            title: "Team",
-            url: "#",
-          },
-          {
-            title: "Billing",
-            url: "#",
-          },
-          {
-            title: "Limits",
-            url: "#",
-          },
-        ],
-      },
-    ],
-    projects: [
-      {
-        name: "Design Engineering",
-        url: "#",
-        icon: (
-          <HugeiconsIcon icon={CropIcon} strokeWidth={2} />
-        ),
-      },
-      {
-        name: "Sales & Marketing",
-        url: "#",
-        icon: (
-          <HugeiconsIcon icon={PieChartIcon} strokeWidth={2} />
-        ),
-      },
-      {
-        name: "Travel",
-        url: "#",
-        icon: (
-          <HugeiconsIcon icon={MapsIcon} strokeWidth={2} />
-        ),
-      },
-    ],
   }
 
-  const [activeTeam, setActiveTeam] = React.useState(data.teams[0])
+  const [workspaces, setWorkspaces] = React.useState<WorkspaceOption[]>([])
+  const [activeWorkspace, setActiveWorkspace] =
+    React.useState<WorkspaceOption | null>(null)
+  const [isAddWorkspaceOpen, setIsAddWorkspaceOpen] = React.useState(false)
+  const [activeTabId, setActiveTabId] = React.useState<AppTabId>(
+    "dashboard"
+  )
+
+  React.useEffect(() => {
+    async function loadWorkspaces() {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL
+
+      if (!API_URL) {
+        return
+      }
+
+      const res = await fetch(`${API_URL}/api/private/workspace/`, {
+        credentials: "include",
+      })
+
+      if (res.status === 401) {
+        router.push("/signin")
+        return
+      }
+
+      if (!res.ok) {
+        return
+      }
+
+      const data = (await res.json()) as WorkspaceOption[]
+      setWorkspaces(data)
+      setActiveWorkspace((current) => current ?? data[0] ?? null)
+    }
+
+    loadWorkspaces()
+  }, [router])
+
+  React.useEffect(() => {
+    const stored = localStorage.getItem("sidebar-active-tab")
+    if (stored === "dashboard" || stored === "customers") {
+      setActiveTabId(stored)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    localStorage.setItem("sidebar-active-tab", activeTabId)
+  }, [activeTabId])
+  const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
+  const ActiveContent = activeTab.component
 
   return (
     <SidebarProvider>
@@ -240,10 +195,10 @@ export function SidebarIconLayout() {
                     </Button>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-medium">
-                        {activeTeam.name}
+                        {activeWorkspace?.name ?? "Select workspace"}
                       </span>
                       <span className="truncate text-xs">
-                        {activeTeam.plan}
+                        Workspace
                       </span>
                     </div>
                     <HugeiconsIcon icon={UnfoldMoreIcon} strokeWidth={2} />
@@ -251,16 +206,43 @@ export function SidebarIconLayout() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuGroup>
-                    <DropdownMenuLabel>Teams</DropdownMenuLabel>
-                    {data.teams.map((team) => (
-                      <DropdownMenuItem
-                        key={team.name}
-                        onClick={() => setActiveTeam(team)}
-                      >
-                        {team.name}
+                    <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
+                    {workspaces.length ? (
+                      workspaces.map((workspace) => {
+                        const isActive = activeWorkspace?.id === workspace.id
+
+                        return (
+                          <DropdownMenuItem
+                            key={workspace.id}
+                            onClick={() => setActiveWorkspace(workspace)}
+                          >
+                            <span>{workspace.name}</span>
+                            {isActive && (
+                              <Badge
+                                variant="outline"
+                                className="ml-auto text-[10px] uppercase"
+                              >
+                                Active
+                              </Badge>
+                            )}
+                          </DropdownMenuItem>
+                        )
+                      })
+                    ) : (
+                      <DropdownMenuItem className="text-muted-foreground" disabled>
+                        No workspaces
                       </DropdownMenuItem>
-                    ))}
+                    )}
                   </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={(event) => {
+                      event.preventDefault()
+                      setIsAddWorkspaceOpen(true)
+                    }}
+                  >
+                    Add new workspace
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </SidebarMenuItem>
@@ -268,53 +250,24 @@ export function SidebarIconLayout() {
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
-            <SidebarMenu>
-              {data.navMain.map((item) => (
-                <Collapsible
-                  key={item.title}
-                  asChild
-                  defaultOpen={item.isActive}
-                  className="group/collapsible"
-                >
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip={item.title} asChild>
-                      <CollapsibleTrigger>
-                        {item.icon}
-                        <span>{item.title}</span>
-                        <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} className="ml-auto transition-transform duration-100 group-data-open/collapsible:rotate-90" />
-                      </CollapsibleTrigger>
+            <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {tabs.map((tab) => (
+                  <SidebarMenuItem key={tab.id}>
+                    <SidebarMenuButton
+                      tooltip={tab.label}
+                      isActive={activeTabId === tab.id}
+                      onClick={() => setActiveTabId(tab.id)}
+                      className="gap-2"
+                    >
+                      {tab.icon}
+                      <span>{tab.label}</span>
                     </SidebarMenuButton>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {item.items?.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton asChild>
-                              <a href={subItem.url}>{subItem.title}</a>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
                   </SidebarMenuItem>
-                </Collapsible>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-          <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-            <SidebarGroupLabel>Projects</SidebarGroupLabel>
-            <SidebarMenu>
-              {data.projects.map((item) => (
-                <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      {item.icon}
-                      {item.name}
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
@@ -364,13 +317,11 @@ export function SidebarIconLayout() {
                       </Item>
                     </DropdownMenuLabel>
                   </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem>Account</DropdownMenuItem>
                     <DropdownMenuItem>Billing</DropdownMenuItem>
                     <DropdownMenuItem>Settings</DropdownMenuItem>
                   </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem>Log out</DropdownMenuItem>
                   </DropdownMenuGroup>
@@ -383,19 +334,32 @@ export function SidebarIconLayout() {
       </Sidebar>
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
+          <div className="flex items-center gap-3 px-4">
             <SidebarTrigger className="-ml-1" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">{activeTab.label}</span>
+              <span className="text-xs text-muted-foreground">
+                Switch tabs from the sidebar
+              </span>
+            </div>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-          </div>
-          <div className="bg-muted/50 min-h-screen flex-1 rounded-xl md:min-h-min" />
-        </div>
+        <ActiveContent />
       </SidebarInset>
+      <AlertDialog
+        open={isAddWorkspaceOpen}
+        onOpenChange={setIsAddWorkspaceOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Coming soon!</AlertDialogTitle>
+            <AlertDialogDescription>
+              Workspace creation is on the way.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogAction>Got it</AlertDialogAction>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   )
 }

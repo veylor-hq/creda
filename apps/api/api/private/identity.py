@@ -51,6 +51,7 @@ class PersonExpanded(PersonListItem):
     billing_email: Optional[EmailStr] = None
     phone: Optional[str] = None
     website: Optional[str] = None
+    address: Optional[Address] = None
     expense_tags: List[str] = []
     tax_id: Optional[str] = None
     note: Optional[str] = None
@@ -78,7 +79,7 @@ async def list_persons(
     # 🔍 filters
     search: Optional[str] = Query(None, description="Search by name or email"),
     tag: Optional[str] = Query(None, description="Filter by expense tag"),
-    archived: bool = Query(False),
+    archived: Optional[str] = Query("false"),
 
     # 🧩 includes
     include: List[str] = Query(
@@ -86,10 +87,13 @@ async def list_persons(
         description="Extra fields to include (e.g. include=details)"
     ),
 ):
-    query = Person.find(
-        Person.workspace_id == workspace.id,
-        Person.is_archived == archived,
-    )
+    query = Person.find(Person.workspace_id == workspace.id)
+
+    archived_value = archived.lower() if archived else None
+    if archived_value in ("true", "false"):
+        query = query.find(Person.is_archived == (archived_value == "true"))
+    elif archived_value not in (None, "all"):
+        raise HTTPException(status_code=400, detail="Invalid archived value")
 
     if search:
         query = query.find(
@@ -128,6 +132,7 @@ async def list_persons(
             billing_email=p.billing_email,
             phone=p.phone,
             website=p.website,
+            address=p.address,
             expense_tags=p.expense_tags,
             tax_id=p.tax_id,
             note=p.note,
