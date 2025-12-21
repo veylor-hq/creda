@@ -18,6 +18,7 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       SMTP_SENDER: ${SMTP_SENDER}
       SMTP_USE_TLS: ${SMTP_USE_TLS}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS}
 
   web:
     build:
