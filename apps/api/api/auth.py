@@ -151,7 +151,7 @@ async def signin_event(payload: AuthSchema, response: Response):
         key="access_token",
         value=jwt_token,
         httponly=True,
-        secure=False, # TODO: add to env config
+        secure=True, # TODO: add to env config
         samesite="lax",
         max_age=60 * 60 * 24 * 7,
     )
@@ -174,7 +174,7 @@ async def logout_event(response: Response):
         key="access_token",
         path="/",
         httponly=True,
-        secure=False,
+        secure=True,
         samesite="lax",
     )
     return {"ok": True}
