@@ -49,12 +49,12 @@ class FastJWT:
             if jwt_token.get("expire") < int(datetime.datetime.now().timestamp()):
                 raise
 
-            user = await User.get(PydanticObjectId(jwt_token.get("user_id")))
+            user = await User.get(PydanticObjectId(jwt_token.get("id")))
 
             if not user:
                 raise
 
-            if not user.is_confirmed:
+            if not user.email_verified:
                 raise
 
             return user
