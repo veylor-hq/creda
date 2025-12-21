@@ -99,6 +99,7 @@ type SettingsDialogProps = {
   profile?: {
     email: string
     email_verified: boolean
+    full_name?: string | null
   } | null
 }
 
@@ -165,6 +166,7 @@ export function SettingsDialog({
                 <AccountSettingsPanel
                   email={profile?.email}
                   emailVerified={profile?.email_verified}
+                  fullName={profile?.full_name ?? ""}
                 />
               ) : (
                 <>

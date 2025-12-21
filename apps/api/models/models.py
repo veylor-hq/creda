@@ -15,6 +15,7 @@ class User(Document):
     email: str
     password: str
     email_verified: bool = False
+    full_name: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Workspace(Document):

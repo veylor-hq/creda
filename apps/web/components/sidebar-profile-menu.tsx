@@ -37,6 +37,7 @@ type Profile = {
   id: string
   email: string
   email_verified: boolean
+  full_name?: string | null
 }
 
 const settingsMenuItems: Array<{ id: SettingsSectionId; label: string }> = [
