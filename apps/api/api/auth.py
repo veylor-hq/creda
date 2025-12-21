@@ -152,9 +152,9 @@ async def signin_event(payload: AuthSchema, response: Response):
         key="access_token",
         value=jwt_token,
         httponly=True,
-        domain=".ihorsavenko.com",
-        samesite="none",
-        secure=True,
+        domain=".ihorsavenko.com" if is_prod else None,
+        samesite="none" if is_prod else None,
+        secure=True if is_prod else False,
         path="/",
     )
 
@@ -179,9 +179,9 @@ async def logout_event(response: Response):
     response.delete_cookie(
         key="access_token",
         path="/",
-        domain=".ihorsavenko.com",
-        samesite="none",
-        secure=True,
+        domain=".ihorsavenko.com" if is_prod else None,
+        samesite="none" if is_prod else None,
+        secure=True if is_prod else False,
         httponly=True,
     )
 
