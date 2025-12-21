@@ -3,12 +3,6 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,22 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item"
 import {
   Sidebar,
   SidebarContent,
@@ -53,12 +31,15 @@ import {
 } from "@/components/ui/sidebar"
 import { CustomersTable } from "@/components/customers-table"
 import { DashboardBlankState } from "@/components/dashboard-blank"
+import { SidebarProfileMenu } from "@/components/sidebar-profile-menu"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   LayoutIcon,
   UnfoldMoreIcon,
   UserIcon,
 } from "@hugeicons/core-free-icons"
+import { Badge } from "./ui/badge"
+import { AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialog } from "./ui/alert-dialog"
 
 type AppTabId = "dashboard" | "customers"
 
@@ -91,14 +72,6 @@ const tabs: AppTab[] = [
 
 export function SidebarIconLayout() {
   const router = useRouter()
-  const data = {
-    user: {
-      name: "shadcn",
-      email: "m@example.com",
-      avatar: "/avatars/shadcn.jpg",
-    },
-  }
-
   const [workspaces, setWorkspaces] = React.useState<WorkspaceOption[]>([])
   const [activeWorkspace, setActiveWorkspace] =
     React.useState<WorkspaceOption | null>(null)
@@ -272,62 +245,7 @@ export function SidebarIconLayout() {
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton
-                    size="lg"
-                    className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
-                  >
-                    <Avatar>
-                      <AvatarImage
-                        src={data.user.avatar}
-                        alt={data.user.name}
-                      />
-                      <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                    </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-medium">
-                        {data.user.name}
-                      </span>
-                      <span className="truncate text-xs">
-                        {data.user.email}
-                      </span>
-                    </div>
-                    <HugeiconsIcon icon={UnfoldMoreIcon} strokeWidth={2} />
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel>
-                      <Item size="xs">
-                        <ItemMedia>
-                          <Avatar>
-                            <AvatarImage
-                              src={data.user.avatar}
-                              alt={data.user.name}
-                            />
-                            <AvatarFallback>CN</AvatarFallback>
-                          </Avatar>
-                        </ItemMedia>
-                        <ItemContent>
-                          <ItemTitle>{data.user.name}</ItemTitle>
-                          <ItemDescription> {data.user.email}</ItemDescription>
-                        </ItemContent>
-                      </Item>
-                    </DropdownMenuLabel>
-                  </DropdownMenuGroup>
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem>Account</DropdownMenuItem>
-                    <DropdownMenuItem>Billing</DropdownMenuItem>
-                    <DropdownMenuItem>Settings</DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem>Log out</DropdownMenuItem>
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
+            <SidebarProfileMenu />
           </SidebarMenu>
         </SidebarFooter>
         <SidebarRail />
