@@ -30,13 +30,29 @@ type IncomeListItem = {
   is_reconciled: boolean
 }
 
+type IncomeSummary = {
+  count: number
+  total_amount: number
+  reconciled_count: number
+}
+
+type IncomeListResponse = {
+  items: IncomeListItem[]
+  total: number
+  page: number
+  page_size: number
+  pages: number
+}
+
 type LoadState = "idle" | "loading" | "error" | "ready"
 
 export function DashboardOverview() {
   const router = useRouter()
   const [activeCustomers, setActiveCustomers] = useState<CustomerListItem[]>([])
   const [archivedCustomers, setArchivedCustomers] = useState<CustomerListItem[]>([])
-  const [incomes, setIncomes] = useState<IncomeListItem[]>([])
+  const [recentIncome, setRecentIncome] = useState<IncomeListItem[]>([])
+  const [summary, setSummary] = useState<IncomeSummary | null>(null)
+  const [monthSummary, setMonthSummary] = useState<IncomeSummary | null>(null)
   const [loadState, setLoadState] = useState<LoadState>("idle")
 
   useEffect(() => {
@@ -50,74 +66,105 @@ export function DashboardOverview() {
 
       setLoadState("loading")
 
-      const [activeRes, archivedRes, incomeRes] = await Promise.all([
-        fetch(`${API_URL}/api/private/identity/?archived=false`, {
-          credentials: "include",
-        }),
-        fetch(`${API_URL}/api/private/identity/?archived=true`, {
-          credentials: "include",
-        }),
-        fetch(`${API_URL}/api/private/income/`, {
-          credentials: "include",
-        }),
-      ])
+      const monthStart = new Date()
+      monthStart.setDate(1)
+      monthStart.setHours(0, 0, 0, 0)
 
-      if ([activeRes, archivedRes, incomeRes].some((res) => res.status === 401)) {
+      const monthParams = new URLSearchParams({
+        from_date: monthStart.toISOString(),
+      })
+
+      const [activeRes, archivedRes, incomeRes, summaryRes, monthRes] =
+        await Promise.all([
+          fetch(`${API_URL}/api/private/identity/?archived=false`, {
+            credentials: "include",
+          }),
+          fetch(`${API_URL}/api/private/identity/?archived=true`, {
+            credentials: "include",
+          }),
+          fetch(
+            `${API_URL}/api/private/income/?page=1&page_size=6&sort_by=received_at&sort_dir=desc`,
+            {
+              credentials: "include",
+            }
+          ),
+          fetch(`${API_URL}/api/private/income/summary`, {
+            credentials: "include",
+          }),
+          fetch(`${API_URL}/api/private/income/summary?${monthParams.toString()}`, {
+            credentials: "include",
+          }),
+        ])
+
+      if ([activeRes, archivedRes, incomeRes, summaryRes, monthRes].some((res) => res.status === 401)) {
         router.push("/signin")
         return
       }
 
-      if (![activeRes, archivedRes, incomeRes].every((res) => res.ok)) {
+      if (![activeRes, archivedRes, incomeRes, summaryRes, monthRes].every((res) => res.ok)) {
         setLoadState("error")
         return
       }
 
-      const [activeData, archivedData, incomeData] =
+      const [activeData, archivedData, incomeData, summaryData, monthData] =
         (await Promise.all([
           activeRes.json(),
           archivedRes.json(),
           incomeRes.json(),
-        ])) as [CustomerListItem[], CustomerListItem[], IncomeListItem[]]
+          summaryRes.json(),
+          monthRes.json(),
+        ])) as [
+          CustomerListItem[],
+          CustomerListItem[],
+          IncomeListResponse,
+          IncomeSummary,
+          IncomeSummary,
+        ]
 
       setActiveCustomers(activeData)
       setArchivedCustomers(archivedData)
-      setIncomes(incomeData)
+      setRecentIncome(incomeData.items)
+      setSummary(summaryData)
+      setMonthSummary(monthData)
       setLoadState("ready")
     }
 
     loadStats()
   }, [router])
 
-  const totalCustomers = activeCustomers.length + archivedCustomers.length
-  const reconciledCount = incomes.filter((income) => income.is_reconciled).length
-  const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0)
 
-  const monthIncome = useMemo(() => {
-    const now = new Date()
-    return incomes
-      .filter((income) => {
-        const date = new Date(income.received_at)
-        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
-      })
-      .reduce((sum, income) => sum + income.amount, 0)
-  }, [incomes])
+  const totalCustomers = activeCustomers.length + archivedCustomers.length
+  const reconciledCount = summary?.reconciled_count ?? 0
+  const totalIncome = summary?.total_amount ?? 0
+  const monthIncome = monthSummary?.total_amount ?? 0
 
   const incomeBars = useMemo(() => {
-    const recent = incomes
-      .slice(0, 10)
-      .map((income) => income.amount)
+    const recent = recentIncome.map((income) => income.amount)
     const max = Math.max(...recent, 1)
     return recent.map((amount) => Math.round((amount / max) * 100))
-  }, [incomes])
+  }, [recentIncome])
 
   const recentCustomers = activeCustomers.slice(0, 5)
-  const recentIncome = incomes.slice(0, 6)
 
   const statusBadge = (() => {
     if (loadState === "loading") return "Loading…"
     if (loadState === "error") return "Unavailable"
     return `${activeCustomers.length} active`
   })()
+
+  const handleAddCustomer = () => {
+    localStorage.setItem("open-customer-dialog", "true")
+    window.dispatchEvent(
+      new CustomEvent("app:switch-tab", { detail: { tabId: "customers" } })
+    )
+  }
+
+  const handleAddIncome = () => {
+    localStorage.setItem("open-income-dialog", "true")
+    window.dispatchEvent(
+      new CustomEvent("app:switch-tab", { detail: { tabId: "income" } })
+    )
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
@@ -138,6 +185,14 @@ export function DashboardOverview() {
                 </p>
               </div>
               <Badge variant="outline">{statusBadge}</Badge>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={handleAddCustomer}>
+                Add customer
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleAddIncome}>
+                Add transaction
+              </Button>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border bg-background/60 p-4">
@@ -162,14 +217,14 @@ export function DashboardOverview() {
                   {loadState === "ready" ? reconciledCount : "—"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {incomes.length - reconciledCount} pending
+                  {(summary?.count ?? 0) - reconciledCount} pending
                 </p>
               </div>
             </div>
             <div className="rounded-2xl border bg-background/60 p-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">Income pulse</p>
-                <span className="text-xs text-muted-foreground">Last 10 entries</span>
+                <span className="text-xs text-muted-foreground">Last 6 entries</span>
               </div>
               <div className="mt-4 flex h-16 items-end gap-2">
                 {incomeBars.map((height, index) => (
@@ -218,7 +273,7 @@ export function DashboardOverview() {
             <p className="text-xs text-muted-foreground">Signals to watch today.</p>
             <div className="mt-4 space-y-2 text-xs text-muted-foreground">
               <p>• {archivedCustomers.length} customers archived</p>
-              <p>• {incomes.length - reconciledCount} transactions unreconciled</p>
+              <p>• {(summary?.count ?? 0) - reconciledCount} transactions unreconciled</p>
               <p>• {recentIncome.length} income entries in the last sync</p>
             </div>
           </div>
@@ -257,7 +312,7 @@ export function DashboardOverview() {
         <div className="rounded-3xl border bg-card p-6">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">Recent income</p>
-            <Badge variant="outline">{incomes.length} entries</Badge>
+            <Badge variant="outline">{summary?.count ?? 0} entries</Badge>
           </div>
           <div className="mt-4 space-y-3">
             {recentIncome.length ? (
@@ -288,6 +343,7 @@ export function DashboardOverview() {
           </div>
         </div>
       </div>
+
     </div>
   )
 }

@@ -19,6 +19,22 @@ import {
   normalizeListItem,
   toFormState,
 } from "@/components/income/transactions-utils"
+import { Button } from "@/components/ui/button"
+
+const sortOptions = [
+  { value: "received_at:desc", label: "Date (newest)" },
+  { value: "received_at:asc", label: "Date (oldest)" },
+  { value: "amount:desc", label: "Amount (high to low)" },
+  { value: "amount:asc", label: "Amount (low to high)" },
+]
+
+type IncomeListResponse = {
+  items: TransactionListItem[]
+  total: number
+  page: number
+  page_size: number
+  pages: number
+}
 
 export function TransactionsTab() {
   const router = useRouter()
@@ -33,9 +49,15 @@ export function TransactionsTab() {
   const [dateTo, setDateTo] = useState("")
   const [minAmount, setMinAmount] = useState("")
   const [maxAmount, setMaxAmount] = useState("")
-  const [reconciledFilter, setReconciledFilter] = useState<"all" | "true" | "false">(
-    "all"
-  )
+  const [reconciledFilter, setReconciledFilter] = useState<
+    "all" | "true" | "false"
+  >("all")
+  const [sortValue, setSortValue] = useState(sortOptions[0].value)
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(25)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create")
   const [activeTransaction, setActiveTransaction] = useState<
@@ -53,9 +75,12 @@ export function TransactionsTab() {
         return
       }
 
-      const res = await fetch(`${API_URL}/api/private/identity/`, {
-        credentials: "include",
-      })
+      const res = await fetch(
+        `${API_URL}/api/private/identity/?archived=all`,
+        {
+          credentials: "include",
+        }
+      )
 
       if (res.status === 401) {
         router.push("/signin")
@@ -74,6 +99,27 @@ export function TransactionsTab() {
   }, [router])
 
   useEffect(() => {
+    const shouldOpen = localStorage.getItem("open-income-dialog")
+    if (shouldOpen) {
+      localStorage.removeItem("open-income-dialog")
+      openCreate()
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleOpen = () => {
+      openCreate()
+    }
+
+    window.addEventListener("app:open-income-dialog", handleOpen)
+    return () => window.removeEventListener("app:open-income-dialog", handleOpen)
+  }, [])
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, sourceFilter, dateFrom, dateTo, minAmount, maxAmount, reconciledFilter, sortValue])
+
+  useEffect(() => {
     async function loadTransactions() {
       const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -84,7 +130,13 @@ export function TransactionsTab() {
 
       setLoadState("loading")
 
-      const params = new URLSearchParams()
+      const [sort_by, sort_dir] = sortValue.split(":")
+      const params = new URLSearchParams({
+        page: page.toString(),
+        page_size: pageSize.toString(),
+        sort_by,
+        sort_dir,
+      })
       if (sourceFilter !== "all") {
         params.set("source_type", sourceFilter)
       }
@@ -103,9 +155,8 @@ export function TransactionsTab() {
       if (reconciledFilter !== "all") {
         params.set("is_reconciled", reconciledFilter)
       }
-      const url = params.toString()
-        ? `${API_URL}/api/private/income/?${params.toString()}`
-        : `${API_URL}/api/private/income/`
+
+      const url = `${API_URL}/api/private/income/?${params.toString()}`
       const res = await fetch(url, {
         credentials: "include",
       })
@@ -120,13 +171,26 @@ export function TransactionsTab() {
         return
       }
 
-      const data = (await res.json()) as TransactionListItem[]
-      setTransactions(data.map(normalizeListItem))
+      const data = (await res.json()) as IncomeListResponse
+      setTransactions(data.items.map(normalizeListItem))
+      setTotalPages(data.pages)
+      setTotalCount(data.total)
       setLoadState("ready")
     }
 
     loadTransactions()
-  }, [router, sourceFilter, dateFrom, dateTo, minAmount, maxAmount, reconciledFilter])
+  }, [
+    router,
+    page,
+    pageSize,
+    sourceFilter,
+    dateFrom,
+    dateTo,
+    minAmount,
+    maxAmount,
+    reconciledFilter,
+    sortValue,
+  ])
 
   const filteredTransactions = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -151,7 +215,10 @@ export function TransactionsTab() {
   const openCreate = () => {
     setDrawerMode("create")
     setActiveTransaction(null)
-    setFormState({ ...emptyFormState, received_at: new Date().toISOString().slice(0, 10) })
+    setFormState({
+      ...emptyFormState,
+      received_at: new Date().toISOString().slice(0, 10),
+    })
     setDrawerOpen(true)
   }
 
@@ -169,7 +236,13 @@ export function TransactionsTab() {
       return
     }
 
-    const params = new URLSearchParams()
+    const [sort_by, sort_dir] = sortValue.split(":")
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString(),
+      sort_by,
+      sort_dir,
+    })
     if (sourceFilter !== "all") {
       params.set("source_type", sourceFilter)
     }
@@ -188,9 +261,8 @@ export function TransactionsTab() {
     if (reconciledFilter !== "all") {
       params.set("is_reconciled", reconciledFilter)
     }
-    const url = params.toString()
-      ? `${API_URL}/api/private/income/?${params.toString()}`
-      : `${API_URL}/api/private/income/`
+
+    const url = `${API_URL}/api/private/income/?${params.toString()}`
     const res = await fetch(url, {
       credentials: "include",
     })
@@ -205,8 +277,10 @@ export function TransactionsTab() {
       return
     }
 
-    const data = (await res.json()) as TransactionListItem[]
-    setTransactions(data.map(normalizeListItem))
+    const data = (await res.json()) as IncomeListResponse
+    setTransactions(data.items.map(normalizeListItem))
+    setTotalPages(data.pages)
+    setTotalCount(data.total)
     setLoadState("ready")
   }
 
@@ -307,6 +381,9 @@ export function TransactionsTab() {
           onMinAmountChange={setMinAmount}
           onMaxAmountChange={setMaxAmount}
           onReconciledFilterChange={setReconciledFilter}
+          sortValue={sortValue}
+          onSortChange={setSortValue}
+          sortOptions={sortOptions}
           onCreate={openCreate}
         />
         <TransactionsTable
@@ -314,6 +391,33 @@ export function TransactionsTab() {
           people={people}
           onSelect={openEdit}
         />
+        <div className="flex items-center justify-between border-t px-4 py-3 text-xs text-muted-foreground">
+          <span>
+            Showing {(page - 1) * pageSize + 1}–
+            {Math.min(page * pageSize, totalCount)} of {totalCount}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page <= 1}
+            >
+              Previous
+            </Button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={page >= totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
         {loadState === "loading" && (
           <div className="px-4 py-3 text-xs text-muted-foreground">Loading…</div>
         )}

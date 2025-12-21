@@ -46,6 +46,7 @@ class PersonListItem(BaseModel):
     name: str
     email: Optional[EmailStr] = None
     contact_person: Optional[str] = None
+    is_archived: bool
 
 class PersonExpanded(PersonListItem):
     billing_email: Optional[EmailStr] = None
@@ -118,26 +119,28 @@ async def list_persons(
                 name=p.name,
                 email=p.email,
                 contact_person=p.contact_person,
+                is_archived=p.is_archived,
             )
             for p in persons
         ]
 
     # 🧠 expanded response
     return [
-        PersonExpanded(
-            id=p.id,
-            name=p.name,
-            email=p.email,
-            contact_person=p.contact_person,
-            billing_email=p.billing_email,
-            phone=p.phone,
-            website=p.website,
-            address=p.address,
-            expense_tags=p.expense_tags,
-            tax_id=p.tax_id,
-            note=p.note,
-            created_at=p.created_at,
-        )
+            PersonExpanded(
+                id=p.id,
+                name=p.name,
+                email=p.email,
+                contact_person=p.contact_person,
+                billing_email=p.billing_email,
+                phone=p.phone,
+                website=p.website,
+                address=p.address,
+                expense_tags=p.expense_tags,
+                tax_id=p.tax_id,
+                note=p.note,
+                created_at=p.created_at,
+                is_archived=p.is_archived,
+            )
         for p in persons
     ]
 
@@ -203,3 +206,24 @@ async def archive_person(
     await person.save()
 
     return {"ok": True}
+
+
+@identity_router.patch("/{person_id}/reactivate")
+async def reactivate_person(
+    person_id: PydanticObjectId,
+    user: User = Depends(FastJWT().login_required),
+    workspace: Workspace = Depends(get_current_workspace),
+):
+    person = await Person.find_one(
+        Person.id == person_id,
+        Person.workspace_id == workspace.id,
+    )
+
+    if not person:
+        raise HTTPException(status_code=404, detail="Person not found")
+
+    person.is_archived = False
+    person.updated_at = datetime.utcnow()
+    await person.save()
+
+    return person

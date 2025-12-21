@@ -23,6 +23,7 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
@@ -33,10 +34,12 @@ import { CustomersTable } from "@/components/customers-table"
 import { DashboardOverview } from "@/components/dashboard-overview"
 import { TransactionsTab } from "@/components/income/transactions-tab"
 import { SidebarProfileMenu } from "@/components/sidebar-profile-menu"
+import { CommandLauncher } from "@/components/command-launcher"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   CreditCardIcon,
   LayoutIcon,
+  PlusSignIcon,
   UnfoldMoreIcon,
   UserIcon,
 } from "@hugeicons/core-free-icons"
@@ -84,6 +87,7 @@ export function SidebarIconLayout() {
   const [activeWorkspace, setActiveWorkspace] =
     React.useState<WorkspaceOption | null>(null)
   const [isAddWorkspaceOpen, setIsAddWorkspaceOpen] = React.useState(false)
+  const [commandOpen, setCommandOpen] = React.useState(false)
   const [activeTabId, setActiveTabId] = React.useState<AppTabId>(
     "dashboard"
   )
@@ -125,10 +129,51 @@ export function SidebarIconLayout() {
   }, [])
 
   React.useEffect(() => {
+    const handleSwitchTab = (event: Event) => {
+      const detail = (event as CustomEvent<{ tabId: AppTabId }>).detail
+      if (detail?.tabId) {
+        setActiveTabId(detail.tabId)
+      }
+    }
+
+    window.addEventListener("app:switch-tab", handleSwitchTab)
+    return () => window.removeEventListener("app:switch-tab", handleSwitchTab)
+  }, [])
+
+  React.useEffect(() => {
     localStorage.setItem("sidebar-active-tab", activeTabId)
   }, [activeTabId])
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isCommand = event.metaKey || event.ctrlKey
+      if (isCommand && event.key.toLowerCase() === "k") {
+        event.preventDefault()
+        setCommandOpen(true)
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
   const ActiveContent = activeTab.component
+
+  const dispatchTab = (tabId: AppTabId) => {
+    setActiveTabId(tabId)
+  }
+
+  const handleAddCustomer = () => {
+    localStorage.setItem("open-customer-dialog", "true")
+    window.dispatchEvent(new Event("app:open-customer-dialog"))
+    dispatchTab("customers")
+  }
+
+  const handleAddIncome = () => {
+    localStorage.setItem("open-income-dialog", "true")
+    window.dispatchEvent(new Event("app:open-income-dialog"))
+    dispatchTab("income")
+  }
 
   return (
     <SidebarProvider>
@@ -245,6 +290,19 @@ export function SidebarIconLayout() {
                       {tab.icon}
                       <span>{tab.label}</span>
                     </SidebarMenuButton>
+                    {(tab.id === "customers" || tab.id === "income") && (
+                      <SidebarMenuAction
+                        showOnHover
+                        onClick={() =>
+                          tab.id === "customers" ? handleAddCustomer() : handleAddIncome()
+                        }
+                      >
+                        <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} />
+                        <span className="sr-only">
+                          {tab.id === "customers" ? "Add customer" : "Add transaction"}
+                        </span>
+                      </SidebarMenuAction>
+                    )}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
@@ -286,6 +344,47 @@ export function SidebarIconLayout() {
           <AlertDialogAction>Got it</AlertDialogAction>
         </AlertDialogContent>
       </AlertDialog>
+      <CommandLauncher
+        open={commandOpen}
+        onOpenChange={setCommandOpen}
+        actions={[
+          {
+            id: "add-customer",
+            label: "Add customer",
+            description: "Create a new customer",
+            shortcut: "C",
+            onSelect: handleAddCustomer,
+          },
+          {
+            id: "add-transaction",
+            label: "Add transaction",
+            description: "Log incoming income",
+            shortcut: "T",
+            onSelect: handleAddIncome,
+          },
+          {
+            id: "go-dashboard",
+            label: "Go to Dashboard",
+            description: "Jump to overview",
+            shortcut: "D",
+            onSelect: () => dispatchTab("dashboard"),
+          },
+          {
+            id: "go-customers",
+            label: "Go to Customers",
+            description: "Open customer list",
+            shortcut: "G",
+            onSelect: () => dispatchTab("customers"),
+          },
+          {
+            id: "go-income",
+            label: "Go to Income",
+            description: "Open income ledger",
+            shortcut: "I",
+            onSelect: () => dispatchTab("income"),
+          },
+        ]}
+      />
     </SidebarProvider>
   )
 }

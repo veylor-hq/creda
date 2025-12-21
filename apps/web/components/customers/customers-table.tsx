@@ -40,8 +40,8 @@ export function CustomersTable() {
   const [sortKey, setSortKey] = useState<SortKey>("created_at")
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
 
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [sheetMode, setSheetMode] = useState<"create" | "edit">("create")
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create")
   const [activeCustomer, setActiveCustomer] = useState<Customer | null>(null)
   const [formState, setFormState] = useState<FormState>(emptyFormState)
   const [initialFormState, setInitialFormState] = useState<FormState>(
@@ -50,6 +50,7 @@ export function CustomersTable() {
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isReactivating, setIsReactivating] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem(visibleColumnsStorageKey)
@@ -70,6 +71,23 @@ export function CustomersTable() {
     } catch {
       localStorage.removeItem(visibleColumnsStorageKey)
     }
+  }, [])
+
+  useEffect(() => {
+    const shouldOpen = localStorage.getItem("open-customer-dialog")
+    if (shouldOpen) {
+      localStorage.removeItem("open-customer-dialog")
+      openCreate()
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleOpen = () => {
+      openCreate()
+    }
+
+    window.addEventListener("app:open-customer-dialog", handleOpen)
+    return () => window.removeEventListener("app:open-customer-dialog", handleOpen)
   }, [])
 
   useEffect(() => {
@@ -181,7 +199,7 @@ export function CustomersTable() {
   )
 
   const isSaveDisabled =
-    isSaving || !formState.name.trim() || (sheetMode === "edit" && !isDirty)
+    isSaving || !formState.name.trim() || (dialogMode === "edit" && !isDirty)
 
   const toggleColumn = (columnId: string) => {
     setVisibleColumnIds((prev) => {
@@ -199,27 +217,27 @@ export function CustomersTable() {
   }
 
   const openCreate = () => {
-    setSheetMode("create")
+    setDialogMode("create")
     setActiveCustomer(null)
     setFormState(emptyFormState)
     setInitialFormState(emptyFormState)
     setFormError(null)
-    setSheetOpen(true)
+    setDialogOpen(true)
   }
 
   const openEdit = (customer: Customer) => {
     const nextState = getFormStateFromCustomer(customer)
 
-    setSheetMode("edit")
+    setDialogMode("edit")
     setActiveCustomer(customer)
     setFormState(nextState)
     setInitialFormState(nextState)
     setFormError(null)
-    setSheetOpen(true)
+    setDialogOpen(true)
   }
 
-  const handleSheetChange = (open: boolean) => {
-    setSheetOpen(open)
+  const handleDialogChange = (open: boolean) => {
+    setDialogOpen(open)
 
     if (!open) {
       setFormError(null)
@@ -272,12 +290,12 @@ export function CustomersTable() {
 
     const payload = buildPayload(formState)
     const url =
-      sheetMode === "edit" && activeCustomer
+      dialogMode === "edit" && activeCustomer
         ? `${API_URL}/api/private/identity/${activeCustomer.id}`
         : `${API_URL}/api/private/identity/`
 
     const res = await fetch(url, {
-      method: sheetMode === "edit" ? "PATCH" : "POST",
+      method: dialogMode === "edit" ? "PATCH" : "POST",
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
@@ -298,7 +316,7 @@ export function CustomersTable() {
     }
 
     await reloadCustomers()
-    setSheetOpen(false)
+    setDialogOpen(false)
     setIsSaving(false)
   }
 
@@ -337,8 +355,47 @@ export function CustomersTable() {
     }
 
     await reloadCustomers()
-    setSheetOpen(false)
+    setDialogOpen(false)
     setIsDeleting(false)
+  }
+
+  const handleReactivate = async () => {
+    if (!activeCustomer) {
+      return
+    }
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL
+
+    if (!API_URL) {
+      setFormError("NEXT_PUBLIC_API_URL is not defined")
+      return
+    }
+
+    setIsReactivating(true)
+
+    const res = await fetch(
+      `${API_URL}/api/private/identity/${activeCustomer.id}/reactivate`,
+      {
+        method: "PATCH",
+        credentials: "include",
+      }
+    )
+
+    if (res.status === 401) {
+      setIsReactivating(false)
+      router.push("/signin")
+      return
+    }
+
+    if (!res.ok) {
+      setFormError("Failed to reactivate customer")
+      setIsReactivating(false)
+      return
+    }
+
+    await reloadCustomers()
+    setDialogOpen(false)
+    setIsReactivating(false)
   }
 
   return (
@@ -372,17 +429,20 @@ export function CustomersTable() {
       </div>
 
       <CustomerFormSheet
-        open={sheetOpen}
-        mode={sheetMode}
+        open={dialogOpen}
+        mode={dialogMode}
+        customerId={activeCustomer?.id}
+        isArchived={activeCustomer?.is_archived ?? false}
         formState={formState}
         formError={formError}
-        isSaving={isSaving}
+        isSaving={isSaving || isReactivating}
         isDeleting={isDeleting}
         isSaveDisabled={isSaveDisabled}
-        onOpenChange={handleSheetChange}
+        onOpenChange={handleDialogChange}
         onSave={handleSave}
         onDeactivate={handleDeactivate}
-        onCancel={() => setSheetOpen(false)}
+        onReactivate={handleReactivate}
+        onCancel={() => setDialogOpen(false)}
         onFormChange={setFormState}
       />
     </div>

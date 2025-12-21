@@ -13,12 +13,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import {
   AlertDialog,
@@ -72,183 +71,191 @@ export function TransactionDrawer({
   onDelete,
 }: TransactionDrawerProps) {
   const personOptions = useMemo(
-    () => people.map((person) => ({
-      value: person.id,
-      label: person.email ? `${person.name} · ${person.email}` : person.name,
-    })),
+    () =>
+      people.map((person) => ({
+        value: person.id,
+        label: person.email ? `${person.name} · ${person.email}` : person.name,
+      })),
     [people]
   )
 
   const isEdit = mode === "edit"
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-xl">
-        <SheetHeader>
-          <SheetTitle>
-            {mode === "create" ? "New income" : "Edit income"}
-          </SheetTitle>
-        </SheetHeader>
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          <form
-            className="flex flex-col gap-4"
-            onSubmit={(event) => {
-              event.preventDefault()
-              onSave()
-            }}
-          >
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="income-person">Customer</Label>
-                <Select
-                  value={formState.person_id}
-                  onValueChange={(value) =>
-                    onFormChange({ ...formState, person_id: value })
-                  }
-                  disabled={isEdit}
-                >
-                  <SelectTrigger id="income-person" size="default">
-                    <SelectValue placeholder="Select customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {personOptions.map((person) => (
-                      <SelectItem key={person.value} value={person.value}>
-                        {person.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="h-[min(720px,85vh)] w-[min(760px,92vw)] overflow-hidden rounded-2xl p-0">
+        <DialogTitle className="sr-only">Income</DialogTitle>
+        <DialogDescription className="sr-only">
+          Create or edit income transactions.
+        </DialogDescription>
+        <div className="flex h-full flex-col">
+          <div className="border-b px-5 py-4">
+            <p className="text-sm font-medium">
+              {mode === "create" ? "New income" : "Edit income"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Track incoming money and references.
+            </p>
+          </div>
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            <form
+              className="flex flex-col gap-4 max-w-xl mx-auto"
+              onSubmit={(event) => {
+                event.preventDefault()
+                onSave()
+              }}
+            >
+              <div className="grid gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="income-amount">Amount (GBP)</Label>
-                  <Input
-                    id="income-amount"
-                    value={formState.amount}
-                    onChange={(event) =>
-                      onFormChange({ ...formState, amount: event.target.value })
-                    }
-                    placeholder="0"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    disabled={isEdit}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="income-currency">Currency</Label>
-                  <Input
-                    id="income-currency"
-                    value={formState.currency}
-                    onChange={(event) =>
-                      onFormChange({ ...formState, currency: event.target.value })
-                    }
-                    placeholder="EUR"
-                    disabled={isEdit}
-                  />
-                </div>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="income-source">Source type</Label>
+                  <Label htmlFor="income-person">Customer</Label>
                   <Select
-                    value={formState.source_type}
+                    value={formState.person_id}
                     onValueChange={(value) =>
-                      onFormChange({
-                        ...formState,
-                        source_type: value as IncomeSourceType,
-                      })
+                      onFormChange({ ...formState, person_id: value })
                     }
                     disabled={isEdit}
                   >
-                    <SelectTrigger id="income-source" size="default">
-                      <SelectValue placeholder="Select source" />
+                    <SelectTrigger id="income-person" size="default">
+                      <SelectValue placeholder="Select customer" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sourceOptions.map((source) => (
-                        <SelectItem key={source.value} value={source.value}>
-                          {source.label}
+                      {personOptions.map((person) => (
+                        <SelectItem key={person.value} value={person.value}>
+                          {person.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="income-amount">Amount (GBP)</Label>
+                    <Input
+                      id="income-amount"
+                      value={formState.amount}
+                      onChange={(event) =>
+                        onFormChange({ ...formState, amount: event.target.value })
+                      }
+                      placeholder="0"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      disabled={isEdit}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="income-currency">Currency</Label>
+                    <Input
+                      id="income-currency"
+                      value={formState.currency}
+                      onChange={(event) =>
+                        onFormChange({ ...formState, currency: event.target.value })
+                      }
+                      placeholder="GBP"
+                      disabled={isEdit}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="income-source">Source type</Label>
+                    <Select
+                      value={formState.source_type}
+                      onValueChange={(value) =>
+                        onFormChange({
+                          ...formState,
+                          source_type: value as IncomeSourceType,
+                        })
+                      }
+                      disabled={isEdit}
+                    >
+                      <SelectTrigger id="income-source" size="default">
+                        <SelectValue placeholder="Select source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sourceOptions.map((source) => (
+                          <SelectItem key={source.value} value={source.value}>
+                            {source.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="income-date">Received date</Label>
+                    <Input
+                      id="income-date"
+                      type="date"
+                      value={formState.received_at}
+                      onChange={(event) =>
+                        onFormChange({ ...formState, received_at: event.target.value })
+                      }
+                    />
+                  </div>
+                </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="income-date">Received date</Label>
+                  <Label htmlFor="income-reference">Reference</Label>
                   <Input
-                    id="income-date"
-                    type="date"
-                    value={formState.received_at}
+                    id="income-reference"
+                    value={formState.reference}
                     onChange={(event) =>
-                      onFormChange({ ...formState, received_at: event.target.value })
+                      onFormChange({ ...formState, reference: event.target.value })
                     }
+                    placeholder="Payroll / bank reference"
                   />
                 </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="income-reference">Reference</Label>
-                <Input
-                  id="income-reference"
-                  value={formState.reference}
-                  onChange={(event) =>
-                    onFormChange({ ...formState, reference: event.target.value })
-                  }
-                  placeholder="Payroll / bank reference"
-                />
-              </div>
-              {isEdit && (
-                <p className="text-xs text-muted-foreground">
-                  Amount, currency, source, and customer are immutable in v1.
-                </p>
-              )}
-              <div className="grid gap-2">
-                <Label htmlFor="income-tags">Tags</Label>
-                <Input
-                  id="income-tags"
-                  value={formState.tags}
-                  onChange={(event) =>
-                    onFormChange({ ...formState, tags: event.target.value })
-                  }
-                  placeholder="salary, onboarding"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="income-notes">Notes</Label>
-                <Textarea
-                  id="income-notes"
-                  value={formState.notes}
-                  onChange={(event) =>
-                    onFormChange({ ...formState, notes: event.target.value })
-                  }
-                  placeholder="Optional notes"
-                />
-              </div>
-              <div className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm">
-                <div>
-                  <p className="font-medium">Reconciled</p>
-                  <p className="text-xs text-muted-foreground">
-                    Mark when matched against a bank statement.
-                  </p>
+                <div className="grid gap-2">
+                  <Label htmlFor="income-tags">Tags</Label>
+                  <Input
+                    id="income-tags"
+                    value={formState.tags}
+                    onChange={(event) =>
+                      onFormChange({ ...formState, tags: event.target.value })
+                    }
+                    placeholder="salary, onboarding"
+                  />
                 </div>
-                <Button
-                  type="button"
-                  variant={formState.is_reconciled ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() =>
-                    onFormChange({
-                      ...formState,
-                      is_reconciled: !formState.is_reconciled,
-                    })
-                  }
-                >
-                  {formState.is_reconciled ? "Reconciled" : "Mark reconciled"}
-                </Button>
+                <div className="grid gap-2">
+                  <Label htmlFor="income-notes">Notes</Label>
+                  <Textarea
+                    id="income-notes"
+                    value={formState.notes}
+                    onChange={(event) =>
+                      onFormChange({ ...formState, notes: event.target.value })
+                    }
+                    placeholder="Optional notes"
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm">
+                  <div>
+                    <p className="font-medium">Reconciled</p>
+                    <p className="text-xs text-muted-foreground">
+                      Mark when matched against a bank statement.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={formState.is_reconciled ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() =>
+                      onFormChange({
+                        ...formState,
+                        is_reconciled: !formState.is_reconciled,
+                      })
+                    }
+                  >
+                    {formState.is_reconciled ? "Reconciled" : "Mark reconciled"}
+                  </Button>
+                </div>
+                {isEdit && (
+                  <p className="text-xs text-muted-foreground">
+                    Amount, currency, source, and customer are immutable in v1.
+                  </p>
+                )}
               </div>
-            </div>
-          </form>
-        </div>
-        <SheetFooter className="border-t">
-          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            </form>
+          </div>
+          <div className="flex items-center justify-between border-t px-5 py-4">
             {mode === "edit" ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -279,7 +286,7 @@ export function TransactionDrawer({
             ) : (
               <div />
             )}
-            <div className="flex gap-2 sm:justify-end">
+            <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
@@ -288,8 +295,8 @@ export function TransactionDrawer({
               </Button>
             </div>
           </div>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

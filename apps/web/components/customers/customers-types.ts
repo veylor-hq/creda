@@ -14,6 +14,7 @@ export type Customer = {
   name: string
   email?: string | null
   contact_person?: string | null
+  is_archived?: boolean
   billing_email?: string | null
   phone?: string | null
   website?: string | null

@@ -36,6 +36,9 @@ type TransactionsToolbarProps = {
   onMinAmountChange: (value: string) => void
   onMaxAmountChange: (value: string) => void
   onReconciledFilterChange: (value: "all" | "true" | "false") => void
+  sortValue: string
+  onSortChange: (value: string) => void
+  sortOptions: Array<{ value: string; label: string }>
   onCreate: () => void
 }
 
@@ -54,6 +57,9 @@ export function TransactionsToolbar({
   onMinAmountChange,
   onMaxAmountChange,
   onReconciledFilterChange,
+  sortValue,
+  onSortChange,
+  sortOptions,
   onCreate,
 }: TransactionsToolbarProps) {
   return (
@@ -83,6 +89,18 @@ export function TransactionsToolbar({
               {sourceTypes.map((source) => (
                 <SelectItem key={source.value} value={source.value}>
                   {source.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={sortValue} onValueChange={onSortChange}>
+            <SelectTrigger size="sm">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
