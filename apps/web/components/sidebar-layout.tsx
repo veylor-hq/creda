@@ -31,9 +31,11 @@ import {
 } from "@/components/ui/sidebar"
 import { CustomersTable } from "@/components/customers-table"
 import { DashboardOverview } from "@/components/dashboard-overview"
+import { TransactionsTab } from "@/components/income/transactions-tab"
 import { SidebarProfileMenu } from "@/components/sidebar-profile-menu"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
+  CreditCardIcon,
   LayoutIcon,
   UnfoldMoreIcon,
   UserIcon,
@@ -41,7 +43,7 @@ import {
 import { Badge } from "./ui/badge"
 import { AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialog } from "./ui/alert-dialog"
 
-type AppTabId = "dashboard" | "customers"
+type AppTabId = "dashboard" | "customers" | "income"
 
 type AppTab = {
   id: AppTabId
@@ -67,6 +69,12 @@ const tabs: AppTab[] = [
     label: "Customers",
     icon: <HugeiconsIcon icon={UserIcon} strokeWidth={2} />,
     component: CustomersTable,
+  },
+  {
+    id: "income",
+    label: "Income",
+    icon: <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />,
+    component: TransactionsTab,
   },
 ]
 
@@ -111,7 +119,7 @@ export function SidebarIconLayout() {
 
   React.useEffect(() => {
     const stored = localStorage.getItem("sidebar-active-tab")
-    if (stored === "dashboard" || stored === "customers") {
+    if (stored === "dashboard" || stored === "customers" || stored === "income") {
       setActiveTabId(stored)
     }
   }, [])

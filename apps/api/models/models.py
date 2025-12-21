@@ -72,3 +72,38 @@ class Person(Document):
             "email",
             "billing_email",
         ]
+
+
+class IncomeSourceType(str, Enum):
+    bank_transfer = "bank_transfer"
+    payroll = "payroll"
+    cash = "cash"
+    manual = "manual"
+
+
+class IncomeTransaction(Document):
+    workspace_id: PydanticObjectId
+    person_id: PydanticObjectId
+
+    amount: int
+    currency: str = "GBP"
+    source_type: IncomeSourceType
+    reference: Optional[str] = None
+
+    received_at: datetime
+    notes: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+
+    is_reconciled: bool = False
+    is_archived: bool = False
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Settings:
+        name = "income_transactions"
+        indexes = [
+            "workspace_id",
+            "person_id",
+            "received_at",
+        ]
