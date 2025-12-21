@@ -30,7 +30,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { CustomersTable } from "@/components/customers-table"
-import { DashboardBlankState } from "@/components/dashboard-blank"
+import { DashboardOverview } from "@/components/dashboard-overview"
 import { SidebarProfileMenu } from "@/components/sidebar-profile-menu"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
@@ -60,7 +60,7 @@ const tabs: AppTab[] = [
     id: "dashboard",
     label: "Dashboard",
     icon: <HugeiconsIcon icon={LayoutIcon} strokeWidth={2} />,
-    component: DashboardBlankState,
+    component: DashboardOverview,
   },
   {
     id: "customers",
