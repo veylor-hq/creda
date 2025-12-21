@@ -151,10 +151,12 @@ async def signin_event(payload: AuthSchema, response: Response):
         key="access_token",
         value=jwt_token,
         httponly=True,
-        secure=True, # TODO: add to env config
-        samesite="lax",
-        max_age=60 * 60 * 24 * 7,
+        secure=True,
+        samesite="none",
+        domain=".ihorsavenko.com",
+        path="/",
     )
+
 
     return {"ok": True}
 
