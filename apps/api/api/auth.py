@@ -4,7 +4,7 @@ from app.core.config import config
 from models.models import OTPActivationModel, User, Workspace
 from app.core.password_utils import generate_password, get_password_hash, verify_password
 from beanie import PydanticObjectId
-from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Request, BackgroundTasks, Response
 from pydantic import BaseModel, Field
 from app.core.email import send_email
 
@@ -65,9 +65,11 @@ async def signup_event(payload: AuthSchema, background_tasks: BackgroundTasks) -
 
     await otp_activation.insert()
 
-    activation_token = await FastJWT().encode(
-        isOTP=True,
-        optional_data={"otp_id": str(otp_activation.id), "otp_code": otp_code},
+    activation_token = await FastJWT().encode_otp(
+        data={
+            "otp_id": str(otp_activation.id),
+            "otp_code": otp_code,
+        }
     )
 
     activation_link = (
@@ -92,7 +94,7 @@ async def signup_event(payload: AuthSchema, background_tasks: BackgroundTasks) -
 
 @auth_router.get("/activate/{otp_activation_token}")
 async def activate_otp(otp_activation_token: str):
-    decoded = await FastJWT().decode(otp_activation_token, isOTP=True)
+    decoded = await FastJWT().decode_otp(otp_activation_token)
     if not decoded:
         raise HTTPException(status_code=400, detail="Invalid OTP token")
 
@@ -128,19 +130,30 @@ async def activate_otp(otp_activation_token: str):
 
     return {"message": "Account activated successfully"}
 
-
 @auth_router.post("/signin")
-async def signin_event(payload: AuthSchema):
+async def signin_event(payload: AuthSchema, response: Response):
     user = await User.find_one({"email": payload.email})
     if not user or not verify_password(payload.password, user.password):
         raise HTTPException(status_code=401, detail="Bad email or password")
 
-    jwt_token = await FastJWT().encode(optional_data={
-        "id": str(user.id),
-        "email": payload.email,
-    })
+    jwt_token = await FastJWT().encode_access(
+        data={
+            "id": str(user.id),
+            "email": payload.email,
+        }
+    )
 
-    return {"token": jwt_token}
+
+    response.set_cookie(
+        key="access_token",
+        value=jwt_token,
+        httponly=True,
+        secure=False, # TODO: add to env config
+        samesite="lax",
+        max_age=60 * 60 * 24 * 7,
+    )
+
+    return {"ok": True}
 
 
 @auth_router.get("/verify")
@@ -150,3 +163,12 @@ async def verify_event(request: Request):
     if not user:
         raise HTTPException(401, "Unauthorized")
     return {"status": "valid"}
+
+
+@auth_router.post("/logout")
+async def logout_event(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+    )
+    return {"ok": True}
