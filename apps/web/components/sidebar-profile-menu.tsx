@@ -236,8 +236,24 @@ export function SidebarProfileMenu() {
   }, [profile?.email])
 
   const handleOpenSection = (id: SettingsSectionId) => {
+    if (id === "logout") {
+      setSettingsOpen(false)
+      router.push("/logout")
+      return
+    }
+
     setActiveSectionId(id)
     setSettingsOpen(true)
+  }
+
+  const handleSectionChange = (id: SettingsSectionId) => {
+    if (id === "logout") {
+      setSettingsOpen(false)
+      router.push("/logout")
+      return
+    }
+
+    setActiveSectionId(id)
   }
 
   return (
@@ -308,7 +324,7 @@ export function SidebarProfileMenu() {
         open={settingsOpen}
         activeSectionId={activeSectionId}
         onOpenChange={setSettingsOpen}
-        onSectionChange={setActiveSectionId}
+        onSectionChange={handleSectionChange}
         profile={profile}
       />
     </>
