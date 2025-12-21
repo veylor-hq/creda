@@ -33,7 +33,7 @@ export function toFormState(transaction?: IncomeTransaction): FormState {
 export function buildPayload(form: FormState) {
   return {
     person_id: form.person_id,
-    amount: Math.round(Number(form.amount)),
+    amount: Number(form.amount),
     currency: form.currency,
     source_type: form.source_type,
     reference: form.reference.trim() || null,

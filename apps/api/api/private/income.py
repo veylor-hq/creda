@@ -15,7 +15,7 @@ income_router = APIRouter(prefix="/income")
 
 class IncomeCreate(BaseModel):
     person_id: PydanticObjectId
-    amount: int
+    amount: float
     currency: str = "GBP"
     source_type: IncomeSourceType
     reference: Optional[str] = None
@@ -36,7 +36,7 @@ class IncomeUpdate(BaseModel):
 class IncomeListItem(BaseModel):
     id: PydanticObjectId
     person_id: PydanticObjectId
-    amount: int
+    amount: float
     currency: str
     source_type: IncomeSourceType
     reference: Optional[str] = None
@@ -91,8 +91,8 @@ async def list_income(
     person_id: Optional[PydanticObjectId] = Query(None),
     from_date: Optional[datetime] = Query(None),
     to_date: Optional[datetime] = Query(None),
-    min_amount: Optional[int] = Query(None),
-    max_amount: Optional[int] = Query(None),
+    min_amount: Optional[float] = Query(None),
+    max_amount: Optional[float] = Query(None),
     source_type: Optional[IncomeSourceType] = Query(None),
     is_reconciled: Optional[bool] = Query(None),
 ):

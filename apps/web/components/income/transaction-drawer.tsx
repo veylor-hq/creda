@@ -131,7 +131,7 @@ export function TransactionDrawer({
                     placeholder="0"
                     type="number"
                     min="0"
-                    step="1"
+                    step="0.01"
                     disabled={isEdit}
                   />
                 </div>

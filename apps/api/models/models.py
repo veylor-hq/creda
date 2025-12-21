@@ -85,7 +85,7 @@ class IncomeTransaction(Document):
     workspace_id: PydanticObjectId
     person_id: PydanticObjectId
 
-    amount: int
+    amount: float
     currency: str = "GBP"
     source_type: IncomeSourceType
     reference: Optional[str] = None
