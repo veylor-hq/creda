@@ -146,14 +146,15 @@ async def signin_event(payload: AuthSchema, response: Response):
         }
     )
 
+    is_prod = config.ENV == "production"
 
     response.set_cookie(
         key="access_token",
         value=jwt_token,
         httponly=True,
-        secure=True,
-        samesite="none",
-        domain=".ihorsavenko.com",
+        secure=is_prod,
+        samesite="none" if is_prod else "lax",
+        domain=".ihorsavenko.com" if is_prod else None,
         path="/",
     )
 
