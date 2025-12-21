@@ -67,7 +67,7 @@ function md5(input: string) {
     return (msw << 16) | (lsw & 0xffff)
   }
   const convertToWordArray = (str: string) => {
-    const wordArray = []
+    const wordArray: number[] = []
     let index = 0
     const length = str.length
     while (index < length) {
