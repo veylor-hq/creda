@@ -14,6 +14,7 @@ class Config(BaseSettings):
     DATABASE_URL: str
 
     API_BASE_URL: str
+    FRONTEND_URL: Optional[str] = None
 
     JWT_SECRET_KEY: str
     PASSWORDS_SALT_SECRET_KEY: str

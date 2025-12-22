@@ -20,6 +20,7 @@ services:
       SMTP_USE_TLS: ${SMTP_USE_TLS}
       BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS}
       ENV: ${ENV}
+      FRONTEND_URL: ${FRONTEND_URL}
 
   web:
     build:

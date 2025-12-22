@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.core.jwt import FastJWT
-from models.models import IncomeSourceType, IncomeTransaction, Person, User, Workspace
+from models.models import IncomeSourceType, IncomeTransaction, Person, User, Workspace, Invoice
 from utils.get_current_workspace import get_current_workspace
 
 
@@ -23,6 +23,7 @@ class IncomeCreate(BaseModel):
     notes: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
     is_reconciled: bool = False
+    invoice_id: Optional[PydanticObjectId] = None
 
 
 class IncomeUpdate(BaseModel):
@@ -36,6 +37,7 @@ class IncomeUpdate(BaseModel):
 class IncomeListItem(BaseModel):
     id: PydanticObjectId
     person_id: PydanticObjectId
+    invoice_id: Optional[PydanticObjectId] = None
     amount: float
     currency: str
     source_type: IncomeSourceType
@@ -75,6 +77,18 @@ async def create_income(
 
     if not person:
         raise HTTPException(status_code=404, detail="Person not found")
+
+    if payload.invoice_id:
+        invoice = await Invoice.find_one(
+            {"_id": payload.invoice_id, "workspace_id": workspace.id, "is_archived": False}
+        )
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        if invoice.person_id != payload.person_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Invoice does not belong to the selected customer",
+            )
 
     income = IncomeTransaction(
         workspace_id=workspace.id,
@@ -146,6 +160,7 @@ async def list_income(
             IncomeListItem(
                 id=income.id,
                 person_id=income.person_id,
+                invoice_id=income.invoice_id,
                 amount=income.amount,
                 currency=income.currency,
                 source_type=income.source_type,

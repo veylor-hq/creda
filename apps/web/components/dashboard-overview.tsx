@@ -166,6 +166,19 @@ export function DashboardOverview() {
     )
   }
 
+  const handleAddInvoice = () => {
+    localStorage.setItem("open-invoice-dialog", "true")
+    window.dispatchEvent(
+      new CustomEvent("app:switch-tab", { detail: { tabId: "invoices" } })
+    )
+  }
+
+  const handleOpenInvoices = () => {
+    window.dispatchEvent(
+      new CustomEvent("app:switch-tab", { detail: { tabId: "invoices" } })
+    )
+  }
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
@@ -192,6 +205,9 @@ export function DashboardOverview() {
               </Button>
               <Button size="sm" variant="outline" onClick={handleAddIncome}>
                 Add transaction
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleAddInvoice}>
+                Add invoice
               </Button>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
@@ -221,10 +237,12 @@ export function DashboardOverview() {
                 </p>
               </div>
             </div>
-            <div className="rounded-2xl border bg-background/60 p-4">
+              <div className="rounded-2xl border bg-background/60 p-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Income pulse</p>
-                <span className="text-xs text-muted-foreground">Last 6 entries</span>
+                <p className="text-sm font-medium">Recent income amounts</p>
+                <span className="text-xs text-muted-foreground">
+                  Last 6 transactions · scaled by value
+                </span>
               </div>
               <div className="mt-4 flex h-16 items-end gap-2">
                 {incomeBars.map((height, index) => (
@@ -264,8 +282,13 @@ export function DashboardOverview() {
                 </span>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="mt-4 w-full">
-              View reports
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4 w-full"
+              onClick={handleOpenInvoices}
+            >
+              View invoices
             </Button>
           </div>
           <div className="rounded-3xl border bg-card p-5">

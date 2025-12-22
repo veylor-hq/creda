@@ -2,6 +2,7 @@ import type { FormState, IncomeTransaction, TransactionListItem } from "@/compon
 
 export const emptyFormState: FormState = {
   person_id: "",
+  invoice_id: "",
   amount: "",
   currency: "GBP",
   source_type: "bank_transfer",
@@ -19,6 +20,7 @@ export function toFormState(transaction?: IncomeTransaction): FormState {
 
   return {
     person_id: transaction.person_id,
+    invoice_id: transaction.invoice_id ?? "",
     amount: transaction.amount.toString(),
     currency: transaction.currency,
     source_type: transaction.source_type,
@@ -33,6 +35,7 @@ export function toFormState(transaction?: IncomeTransaction): FormState {
 export function buildPayload(form: FormState) {
   return {
     person_id: form.person_id,
+    invoice_id: form.invoice_id || null,
     amount: Number(form.amount),
     currency: form.currency,
     source_type: form.source_type,

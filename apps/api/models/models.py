@@ -84,6 +84,7 @@ class IncomeSourceType(str, Enum):
 class IncomeTransaction(Document):
     workspace_id: PydanticObjectId
     person_id: PydanticObjectId
+    invoice_id: Optional[PydanticObjectId] = None
 
     amount: float
     currency: str = "GBP"
@@ -106,4 +107,58 @@ class IncomeTransaction(Document):
             "workspace_id",
             "person_id",
             "received_at",
+            "invoice_id",
+        ]
+
+
+class InvoiceStatus(str, Enum):
+    draft = "draft"
+    issued = "issued"
+    paid = "paid"
+    canceled = "canceled"
+
+
+class InvoiceLineItem(BaseModel):
+    description: str
+    quantity: float
+    unit_price: float
+    total: float
+
+
+class Invoice(Document):
+    workspace_id: PydanticObjectId
+    person_id: PydanticObjectId
+
+    number: str
+    public_id: str
+    status: InvoiceStatus = InvoiceStatus.draft
+
+    currency: str = "GBP"
+    issue_date: datetime
+    due_date: datetime
+
+    items: List[InvoiceLineItem] = Field(default_factory=list)
+    notes: Optional[str] = None
+    payment_details: Optional[str] = None
+
+    tax_rate: float = 0.0
+    subtotal: float = 0.0
+    tax_amount: float = 0.0
+    total: float = 0.0
+
+    is_public: bool = False
+    is_archived: bool = False
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Settings:
+        name = "invoices"
+        indexes = [
+            "workspace_id",
+            "person_id",
+            "status",
+            "issue_date",
+            "due_date",
+            "public_id",
         ]

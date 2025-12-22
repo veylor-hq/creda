@@ -33,8 +33,10 @@ import {
 import type {
   FormState,
   IncomeSourceType,
+  InvoiceSummary,
   PersonSummary,
 } from "@/components/income/transactions-types"
+import { formatAmount } from "@/components/income/transactions-utils"
 
 const sourceOptions: Array<{ value: IncomeSourceType; label: string }> = [
   { value: "bank_transfer", label: "Bank transfer" },
@@ -48,6 +50,7 @@ type TransactionDrawerProps = {
   mode: "create" | "edit"
   formState: FormState
   people: PersonSummary[]
+  invoices: InvoiceSummary[]
   isSaving: boolean
   isDeleting: boolean
   isSaveDisabled: boolean
@@ -62,6 +65,7 @@ export function TransactionDrawer({
   mode,
   formState,
   people,
+  invoices,
   isSaving,
   isDeleting,
   isSaveDisabled,
@@ -80,6 +84,23 @@ export function TransactionDrawer({
   )
 
   const isEdit = mode === "edit"
+  const invoiceOptions = useMemo(() => {
+    const filtered = formState.person_id
+      ? invoices.filter((invoice) => invoice.person_id === formState.person_id)
+      : invoices
+    return filtered.map((invoice) => ({
+      value: invoice.id,
+      label: `${invoice.number} · ${formatAmount(
+        invoice.total,
+        invoice.currency
+      )}`,
+      status: invoice.status,
+    }))
+  }, [formState.person_id, invoices])
+  const selectedInvoice = useMemo(
+    () => invoices.find((invoice) => invoice.id === formState.invoice_id),
+    [formState.invoice_id, invoices]
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -111,9 +132,9 @@ export function TransactionDrawer({
                   <Select
                     value={formState.person_id}
                     onValueChange={(value) =>
-                      onFormChange({ ...formState, person_id: value })
+                      onFormChange({ ...formState, person_id: value, invoice_id: "" })
                     }
-                    disabled={isEdit}
+                    disabled={isEdit || !!formState.invoice_id}
                   >
                     <SelectTrigger id="income-person" size="default">
                       <SelectValue placeholder="Select customer" />
@@ -126,6 +147,53 @@ export function TransactionDrawer({
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="income-invoice">Linked invoice (optional)</Label>
+                  <Select
+                    value={formState.invoice_id || "none"}
+                    onValueChange={(value) =>
+                      (() => {
+                        if (value === "none") {
+                          return onFormChange({ ...formState, invoice_id: "" })
+                        }
+                        const invoice = invoices.find((item) => item.id === value)
+                        if (!invoice) {
+                          return onFormChange({ ...formState, invoice_id: value })
+                        }
+                        onFormChange({
+                          ...formState,
+                          invoice_id: value,
+                          person_id: invoice.person_id,
+                          amount:
+                            formState.amount && Number(formState.amount) > 0
+                              ? formState.amount
+                              : invoice.total.toString(),
+                          currency: invoice.currency,
+                          reference: formState.reference || invoice.number,
+                        })
+                      })()
+                    }
+                    disabled={isEdit}
+                  >
+                    <SelectTrigger id="income-invoice" size="default">
+                      <SelectValue placeholder="No invoice" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No invoice</SelectItem>
+                      {invoiceOptions.map((invoice) => (
+                        <SelectItem key={invoice.value} value={invoice.value}>
+                          {invoice.label} · {invoice.status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedInvoice && (
+                    <p className="text-xs text-muted-foreground">
+                      Linked to {selectedInvoice.number}. Customer and currency
+                      synced from invoice.
+                    </p>
+                  )}
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="grid gap-2">

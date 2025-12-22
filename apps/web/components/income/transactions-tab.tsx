@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import type {
   IncomeSourceType,
   IncomeTransaction,
+  InvoiceSummary,
   LoadState,
   PersonSummary,
   TransactionListItem,
@@ -40,6 +41,7 @@ export function TransactionsTab() {
   const router = useRouter()
   const [transactions, setTransactions] = useState<IncomeTransaction[]>([])
   const [people, setPeople] = useState<PersonSummary[]>([])
+  const [invoices, setInvoices] = useState<InvoiceSummary[]>([])
   const [loadState, setLoadState] = useState<LoadState>("idle")
   const [search, setSearch] = useState("")
   const [sourceFilter, setSourceFilter] = useState<IncomeSourceType | "all">(
@@ -96,6 +98,65 @@ export function TransactionsTab() {
     }
 
     loadPeople()
+  }, [router])
+
+  useEffect(() => {
+    async function loadInvoices() {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL
+
+      if (!API_URL) {
+        return
+      }
+
+      const params = new URLSearchParams({
+        page: "1",
+        page_size: "100",
+        sort_by: "issue_date",
+        sort_dir: "desc",
+      })
+
+      const res = await fetch(`${API_URL}/api/private/invoice/?${params.toString()}`, {
+        credentials: "include",
+      })
+
+      if (res.status === 401) {
+        router.push("/signin")
+        return
+      }
+
+      if (!res.ok) {
+        return
+      }
+
+      const data = (await res.json()) as { items: InvoiceSummary[] }
+      const normalizeId = (value: unknown) => {
+        if (typeof value === "string") {
+          return value
+        }
+        if (
+          value &&
+          typeof value === "object" &&
+          "$oid" in value &&
+          typeof (value as { $oid: string }).$oid === "string"
+        ) {
+          return (value as { $oid: string }).$oid
+        }
+        return ""
+      }
+      const normalized = data.items.map((invoice) => ({
+        ...invoice,
+        id: normalizeId(
+          (invoice as InvoiceSummary & { _id?: unknown }).id ??
+            (invoice as InvoiceSummary & { _id?: unknown })._id
+        ),
+        person_id: normalizeId(
+          (invoice as InvoiceSummary & { person_id: unknown }).person_id
+        ),
+      }))
+      setInvoices(normalized)
+    }
+
+    loadInvoices()
   }, [router])
 
   useEffect(() => {
@@ -433,6 +494,7 @@ export function TransactionsTab() {
         mode={drawerMode}
         formState={formState}
         people={people}
+        invoices={invoices}
         isSaving={isSaving}
         isDeleting={isDeleting}
         isSaveDisabled={isSaveDisabled}

@@ -33,11 +33,13 @@ import {
 import { CustomersTable } from "@/components/customers-table"
 import { DashboardOverview } from "@/components/dashboard-overview"
 import { TransactionsTab } from "@/components/income/transactions-tab"
+import { InvoicesTab } from "@/components/invoices/invoices-tab"
 import { SidebarProfileMenu } from "@/components/sidebar-profile-menu"
 import { CommandLauncher } from "@/components/command-launcher"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   CreditCardIcon,
+  File01Icon,
   LayoutIcon,
   PlusSignIcon,
   UnfoldMoreIcon,
@@ -46,7 +48,7 @@ import {
 import { Badge } from "./ui/badge"
 import { AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialog } from "./ui/alert-dialog"
 
-type AppTabId = "dashboard" | "customers" | "income"
+type AppTabId = "dashboard" | "customers" | "income" | "invoices"
 
 type AppTab = {
   id: AppTabId
@@ -78,6 +80,12 @@ const tabs: AppTab[] = [
     label: "Income",
     icon: <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />,
     component: TransactionsTab,
+  },
+  {
+    id: "invoices",
+    label: "Invoices",
+    icon: <HugeiconsIcon icon={File01Icon} strokeWidth={2} />,
+    component: InvoicesTab,
   },
 ]
 
@@ -123,7 +131,12 @@ export function SidebarIconLayout() {
 
   React.useEffect(() => {
     const stored = localStorage.getItem("sidebar-active-tab")
-    if (stored === "dashboard" || stored === "customers" || stored === "income") {
+    if (
+      stored === "dashboard" ||
+      stored === "customers" ||
+      stored === "income" ||
+      stored === "invoices"
+    ) {
       setActiveTabId(stored)
     }
   }, [])
@@ -173,6 +186,12 @@ export function SidebarIconLayout() {
     localStorage.setItem("open-income-dialog", "true")
     window.dispatchEvent(new Event("app:open-income-dialog"))
     dispatchTab("income")
+  }
+
+  const handleAddInvoice = () => {
+    localStorage.setItem("open-invoice-dialog", "true")
+    window.dispatchEvent(new Event("app:open-invoice-dialog"))
+    dispatchTab("invoices")
   }
 
   return (
@@ -290,16 +309,26 @@ export function SidebarIconLayout() {
                       {tab.icon}
                       <span>{tab.label}</span>
                     </SidebarMenuButton>
-                    {(tab.id === "customers" || tab.id === "income") && (
+                    {(tab.id === "customers" ||
+                      tab.id === "income" ||
+                      tab.id === "invoices") && (
                       <SidebarMenuAction
                         showOnHover
                         onClick={() =>
-                          tab.id === "customers" ? handleAddCustomer() : handleAddIncome()
+                          tab.id === "customers"
+                            ? handleAddCustomer()
+                            : tab.id === "income"
+                              ? handleAddIncome()
+                              : handleAddInvoice()
                         }
                       >
                         <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} />
                         <span className="sr-only">
-                          {tab.id === "customers" ? "Add customer" : "Add transaction"}
+                          {tab.id === "customers"
+                            ? "Add customer"
+                            : tab.id === "income"
+                              ? "Add transaction"
+                              : "Add invoice"}
                         </span>
                       </SidebarMenuAction>
                     )}
@@ -352,36 +381,43 @@ export function SidebarIconLayout() {
             id: "add-customer",
             label: "Add customer",
             description: "Create a new customer",
-            shortcut: "C",
             onSelect: handleAddCustomer,
           },
           {
             id: "add-transaction",
             label: "Add transaction",
             description: "Log incoming income",
-            shortcut: "T",
             onSelect: handleAddIncome,
+          },
+          {
+            id: "add-invoice",
+            label: "Add invoice",
+            description: "Create a new invoice",
+            onSelect: handleAddInvoice,
           },
           {
             id: "go-dashboard",
             label: "Go to Dashboard",
             description: "Jump to overview",
-            shortcut: "D",
             onSelect: () => dispatchTab("dashboard"),
           },
           {
             id: "go-customers",
             label: "Go to Customers",
             description: "Open customer list",
-            shortcut: "G",
             onSelect: () => dispatchTab("customers"),
           },
           {
             id: "go-income",
             label: "Go to Income",
             description: "Open income ledger",
-            shortcut: "I",
             onSelect: () => dispatchTab("income"),
+          },
+          {
+            id: "go-invoices",
+            label: "Go to Invoices",
+            description: "Open invoice list",
+            onSelect: () => dispatchTab("invoices"),
           },
         ]}
       />
