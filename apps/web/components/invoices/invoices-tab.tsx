@@ -20,6 +20,7 @@ import {
   toInvoiceForm,
 } from "@/components/invoices/invoices-utils"
 import { Button } from "@/components/ui/button"
+import { trackEvent } from "@/lib/analytics"
 
 export function InvoicesTab() {
   const router = useRouter()
@@ -284,6 +285,29 @@ export function InvoicesTab() {
     await reloadInvoices()
     setDialogOpen(false)
     setNotice({ tone: "success", message: "Invoice saved." })
+    if (dialogMode === "create") {
+      trackEvent("invoice_created", {
+        currency: formState.currency,
+        item_count: formState.items.length,
+        is_public: formState.is_public,
+        send_email: formState.send_email,
+      })
+    } else {
+      trackEvent("invoice_updated", {
+        currency: formState.currency,
+        item_count: formState.items.length,
+        is_public: formState.is_public,
+      })
+      if (activeInvoice?.status && activeInvoice.status !== formState.status) {
+        trackEvent("invoice_status_changed", {
+          from: activeInvoice.status,
+          to: formState.status,
+        })
+        if (activeInvoice.status !== "paid" && formState.status === "paid") {
+          trackEvent("income_created_from_invoice_paid")
+        }
+      }
+    }
   }
 
   const handleDelete = async () => {
@@ -320,6 +344,7 @@ export function InvoicesTab() {
 
     await reloadInvoices()
     setDialogOpen(false)
+    trackEvent("invoice_archived")
   }
 
   const handleSendEmail = async () => {
@@ -355,6 +380,7 @@ export function InvoicesTab() {
     }
 
     setNotice({ tone: "success", message: "Invoice email sent." })
+    trackEvent("invoice_email_sent")
   }
 
   const handleSendReminder = async () => {
@@ -390,6 +416,7 @@ export function InvoicesTab() {
     }
 
     setNotice({ tone: "success", message: "Reminder sent." })
+    trackEvent("invoice_reminder_sent")
   }
 
   return (

@@ -21,6 +21,7 @@ import {
   toFormState,
 } from "@/components/income/transactions-utils"
 import { Button } from "@/components/ui/button"
+import { trackEvent } from "@/lib/analytics"
 
 const sortOptions = [
   { value: "received_at:desc", label: "Date (newest)" },
@@ -380,6 +381,19 @@ export function TransactionsTab() {
 
     await reloadTransactions()
     setDrawerOpen(false)
+    if (drawerMode === "create") {
+      trackEvent("income_created", {
+        source_type: formState.source_type,
+        currency: formState.currency,
+        has_invoice: Boolean(formState.invoice_id),
+      })
+    } else {
+      trackEvent("income_updated", {
+        source_type: formState.source_type,
+        currency: formState.currency,
+        has_invoice: Boolean(formState.invoice_id),
+      })
+    }
   }
 
   const handleDelete = async () => {
@@ -416,6 +430,7 @@ export function TransactionsTab() {
 
     await reloadTransactions()
     setDrawerOpen(false)
+    trackEvent("income_archived")
   }
 
   const isSaveDisabled =

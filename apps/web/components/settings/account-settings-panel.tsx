@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { trackEvent } from "@/lib/analytics"
 
 type AccountSettingsPanelProps = {
   email?: string
@@ -68,6 +69,9 @@ export function AccountSettingsPanel({
     }
 
     setNameStatus("Saved")
+    trackEvent("profile_name_updated", {
+      has_name: Boolean(nameValue.trim()),
+    })
     if (statusTimeoutRef.current) {
       window.clearTimeout(statusTimeoutRef.current)
     }

@@ -32,6 +32,7 @@ import {
 import { SettingsDialog, type SettingsSectionId } from "@/components/settings/settings-dialog"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { UnfoldMoreIcon } from "@hugeicons/core-free-icons"
+import { trackEvent } from "@/lib/analytics"
 
 type Profile = {
   id: string
@@ -238,6 +239,7 @@ export function SidebarProfileMenu() {
 
   const handleOpenSection = (id: SettingsSectionId) => {
     if (id === "logout") {
+      trackEvent("user_logout_requested")
       setSettingsOpen(false)
       router.push("/logout")
       return

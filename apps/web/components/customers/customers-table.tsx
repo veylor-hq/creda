@@ -25,6 +25,7 @@ import {
   getFormStateFromCustomer,
   getSearchableText,
 } from "@/components/customers/customers-utils"
+import { trackEvent } from "@/lib/analytics"
 
 export function CustomersTable() {
   const router = useRouter()
@@ -318,6 +319,19 @@ export function CustomersTable() {
     await reloadCustomers()
     setDialogOpen(false)
     setIsSaving(false)
+    if (dialogMode === "create") {
+      trackEvent("customer_created", {
+        has_email: Boolean(formState.email),
+        has_billing_email: Boolean(formState.billing_email),
+        has_phone: Boolean(formState.phone),
+      })
+    } else {
+      trackEvent("customer_updated", {
+        has_email: Boolean(formState.email),
+        has_billing_email: Boolean(formState.billing_email),
+        has_phone: Boolean(formState.phone),
+      })
+    }
   }
 
   const handleDeactivate = async () => {
@@ -357,6 +371,7 @@ export function CustomersTable() {
     await reloadCustomers()
     setDialogOpen(false)
     setIsDeleting(false)
+    trackEvent("customer_deactivated")
   }
 
   const handleReactivate = async () => {
@@ -396,6 +411,7 @@ export function CustomersTable() {
     await reloadCustomers()
     setDialogOpen(false)
     setIsReactivating(false)
+    trackEvent("customer_reactivated")
   }
 
   return (

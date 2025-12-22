@@ -19,6 +19,7 @@ import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert"
 import { Terminal } from "lucide-react"
+import { trackEvent } from "@/lib/analytics"
 
 export function SignupForm({
   className,
@@ -47,6 +48,7 @@ export function SignupForm({
     )
 
     if (response.ok) {
+      trackEvent("user_registered", { method: "password" })
       router.push('/signin?registered=1')
     } else { 
       const data = await response.json()

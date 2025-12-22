@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { trackEvent } from "@/lib/analytics"
 
 export function LogoutButton() {
   const router = useRouter()
@@ -14,6 +15,7 @@ export function LogoutButton() {
       }
     )
 
+    trackEvent("user_logged_out")
     router.push("/signin")
   }
 

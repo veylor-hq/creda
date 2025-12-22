@@ -19,6 +19,7 @@ import { FormEvent, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert"
 import { Terminal } from "lucide-react"
+import { trackEvent } from "@/lib/analytics"
 
 
 export function SigninForm({ className, ...props }: React.ComponentProps<"div">) {
@@ -47,6 +48,7 @@ export function SigninForm({ className, ...props }: React.ComponentProps<"div">)
     )
 
     if (response.ok) {
+      trackEvent("user_signed_in", { method: "password" })
       router.push('/dashboard')
     } else {
       const data = await response.json()
