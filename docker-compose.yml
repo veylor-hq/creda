@@ -28,6 +28,7 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: https://creda-api.ihorsavenko.com
+        NEXT_PUBLIC_ENABLE_ANALYTICS: "true"
     environment:
       INTERNAL_API_URL: http://api:8000
     ports:
