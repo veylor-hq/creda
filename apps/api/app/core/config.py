@@ -16,6 +16,12 @@ class Config(BaseSettings):
     API_BASE_URL: str
     FRONTEND_URL: Optional[str] = None
 
+    SENTRY_DSN: Optional[str] = None
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.0
+    SENTRY_ENVIRONMENT: Optional[str] = None
+
+    METRICS_TOKEN: Optional[str] = None
+
     JWT_SECRET_KEY: str
     PASSWORDS_SALT_SECRET_KEY: str
 
