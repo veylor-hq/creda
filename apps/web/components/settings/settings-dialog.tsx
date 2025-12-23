@@ -29,6 +29,7 @@ import {
 import { AccountSettingsPanel } from "@/components/settings/account-settings-panel"
 import { SecuritySettingsPanel } from "@/components/settings/security-settings-panel"
 import { NotificationsSettingsPanel } from "@/components/settings/notifications-settings-panel"
+import { AppSettingsPanel } from "@/components/settings/app-settings-panel"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   CreditCardIcon,
@@ -178,6 +179,8 @@ export function SettingsDialog({
                 <SecuritySettingsPanel email={profile?.email} />
               ) : activeSectionId === "notifications" ? (
                 <NotificationsSettingsPanel settings={profile?.notification_settings} />
+              ) : activeSectionId === "settings" ? (
+                <AppSettingsPanel />
               ) : (
                 <>
                   <div className="rounded-2xl border bg-muted/40 p-6">

@@ -61,9 +61,10 @@ async def get_current_workspace(
         workspace = await Workspace.find_one(
             {"_id": PydanticObjectId(workspace_lookup), "is_archived": {"$ne": True}}
         )
-        owner_id = _owner_id(workspace)
-        if workspace and (str(user.id) in _member_ids(workspace) or owner_id == str(user.id)):
-            return workspace
+        if workspace:
+            owner_id = _owner_id(workspace)
+            if str(user.id) in _member_ids(workspace) or owner_id == str(user.id):
+                return workspace
 
     workspace = None
     for item in await Workspace.find({"is_archived": {"$ne": True}}).to_list():

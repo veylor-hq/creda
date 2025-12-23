@@ -316,11 +316,6 @@ export function SidebarProfileMenu() {
                   onSelect={() => handleOpenSection(item.id)}
                 >
                   <span>{item.label}</span>
-                  {activeSectionId === item.id && (
-                    <Badge variant="outline" className="ml-auto text-[10px] uppercase">
-                      Active
-                    </Badge>
-                  )}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuGroup>
