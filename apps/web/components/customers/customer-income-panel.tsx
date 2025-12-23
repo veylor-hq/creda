@@ -58,10 +58,11 @@ export function CustomerIncomePanel({ personId }: CustomerIncomePanelProps) {
         page_size: "5",
         sort_by: "received_at",
         sort_dir: "desc",
+        status: "received",
       })
 
       const [summaryRes, listRes] = await Promise.all([
-        fetch(`${API_URL}/api/private/income/summary?person_id=${personId}`, {
+        fetch(`${API_URL}/api/private/income/summary?person_id=${personId}&status=received`, {
           credentials: "include",
         }),
         fetch(`${API_URL}/api/private/income/?${params.toString()}`, {

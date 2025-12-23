@@ -7,6 +7,7 @@ export const emptyFormState: FormState = {
   currency: "GBP",
   source_type: "bank_transfer",
   reference: "",
+  status: "received",
   received_at: "",
   notes: "",
   tags: "",
@@ -25,6 +26,7 @@ export function toFormState(transaction?: IncomeTransaction): FormState {
     currency: transaction.currency,
     source_type: transaction.source_type,
     reference: transaction.reference ?? "",
+    status: transaction.status,
     received_at: transaction.received_at.slice(0, 10),
     notes: transaction.notes ?? "",
     tags: transaction.tags?.join(", ") ?? "",
@@ -40,6 +42,7 @@ export function buildPayload(form: FormState) {
     currency: form.currency,
     source_type: form.source_type,
     reference: form.reference.trim() || null,
+    status: form.status,
     received_at: new Date(form.received_at).toISOString(),
     notes: form.notes.trim() || null,
     tags: form.tags

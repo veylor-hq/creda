@@ -80,12 +80,24 @@ export function TransactionsTable({
                       <Badge variant="outline">
                         {sourceLabels[transaction.source_type]}
                       </Badge>
+                      {transaction.status === "planned" && (
+                        <Badge variant="secondary">Planned</Badge>
+                      )}
                       {transaction.is_reconciled && (
                         <Badge variant="secondary">Reconciled</Badge>
                       )}
                     </div>
                   </td>
-                  <td className={cn("px-4 py-3 text-right font-medium", transaction.is_reconciled ? "text-foreground" : "text-emerald-500")}>
+                  <td
+                    className={cn(
+                      "px-4 py-3 text-right font-medium",
+                      transaction.status === "planned"
+                        ? "text-muted-foreground"
+                        : transaction.is_reconciled
+                          ? "text-foreground"
+                          : "text-emerald-500"
+                    )}
+                  >
                     {amountLabel}
                   </td>
                 </tr>

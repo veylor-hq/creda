@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 
 import type {
   IncomeSourceType,
+  IncomeStatus,
   IncomeTransaction,
   InvoiceSummary,
   LoadState,
@@ -48,6 +49,7 @@ export function TransactionsTab() {
   const [sourceFilter, setSourceFilter] = useState<IncomeSourceType | "all">(
     "all"
   )
+  const [statusFilter, setStatusFilter] = useState<IncomeStatus | "all">("all")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [minAmount, setMinAmount] = useState("")
@@ -180,7 +182,17 @@ export function TransactionsTab() {
 
   useEffect(() => {
     setPage(1)
-  }, [search, sourceFilter, dateFrom, dateTo, minAmount, maxAmount, reconciledFilter, sortValue])
+  }, [
+    search,
+    sourceFilter,
+    statusFilter,
+    dateFrom,
+    dateTo,
+    minAmount,
+    maxAmount,
+    reconciledFilter,
+    sortValue,
+  ])
 
   useEffect(() => {
     async function loadTransactions() {
@@ -218,6 +230,9 @@ export function TransactionsTab() {
       if (reconciledFilter !== "all") {
         params.set("is_reconciled", reconciledFilter)
       }
+      if (statusFilter !== "all") {
+        params.set("status", statusFilter)
+      }
 
       const url = `${API_URL}/api/private/income/?${params.toString()}`
       const res = await fetch(url, {
@@ -247,6 +262,7 @@ export function TransactionsTab() {
     page,
     pageSize,
     sourceFilter,
+    statusFilter,
     dateFrom,
     dateTo,
     minAmount,
@@ -335,6 +351,9 @@ export function TransactionsTab() {
     if (reconciledFilter !== "all") {
       params.set("is_reconciled", reconciledFilter)
     }
+    if (statusFilter !== "all") {
+      params.set("status", statusFilter)
+    }
 
     const url = `${API_URL}/api/private/income/?${params.toString()}`
     const res = await fetch(url, {
@@ -396,12 +415,14 @@ export function TransactionsTab() {
     if (drawerMode === "create") {
       trackEvent("income_created", {
         source_type: formState.source_type,
+        status: formState.status,
         currency: formState.currency,
         has_invoice: Boolean(formState.invoice_id),
       })
     } else {
       trackEvent("income_updated", {
         source_type: formState.source_type,
+        status: formState.status,
         currency: formState.currency,
         has_invoice: Boolean(formState.invoice_id),
       })
@@ -459,6 +480,8 @@ export function TransactionsTab() {
           onSearchChange={setSearch}
           sourceFilter={sourceFilter}
           onSourceFilterChange={setSourceFilter}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
           dateFrom={dateFrom}
           dateTo={dateTo}
           minAmount={minAmount}

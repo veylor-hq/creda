@@ -133,6 +133,10 @@ class IncomeSourceType(str, Enum):
     cash = "cash"
     manual = "manual"
 
+class IncomeStatus(str, Enum):
+    received = "received"
+    planned = "planned"
+
 
 class IncomeTransaction(Document):
     workspace_id: PydanticObjectId
@@ -143,6 +147,7 @@ class IncomeTransaction(Document):
     currency: str = "GBP"
     source_type: IncomeSourceType
     reference: Optional[str] = None
+    status: IncomeStatus = IncomeStatus.received
 
     received_at: datetime
     notes: Optional[str] = None

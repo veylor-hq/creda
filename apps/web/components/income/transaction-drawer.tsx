@@ -45,6 +45,11 @@ const sourceOptions: Array<{ value: IncomeSourceType; label: string }> = [
   { value: "manual", label: "Manual" },
 ]
 
+const statusOptions = [
+  { value: "received", label: "Received" },
+  { value: "planned", label: "Planned" },
+]
+
 type TransactionDrawerProps = {
   open: boolean
   mode: "create" | "edit"
@@ -250,7 +255,9 @@ export function TransactionDrawer({
                     </Select>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="income-date">Received date</Label>
+                    <Label htmlFor="income-date">
+                      {formState.status === "planned" ? "Planned date" : "Received date"}
+                    </Label>
                     <Input
                       id="income-date"
                       type="date"
@@ -260,6 +267,29 @@ export function TransactionDrawer({
                       }
                     />
                   </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="income-status">Status</Label>
+                  <Select
+                    value={formState.status}
+                    onValueChange={(value) =>
+                      onFormChange({
+                        ...formState,
+                        status: value as "received" | "planned",
+                      })
+                    }
+                  >
+                    <SelectTrigger id="income-status" size="default">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          {status.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="income-reference">Reference</Label>

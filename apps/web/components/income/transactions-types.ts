@@ -1,4 +1,5 @@
 export type IncomeSourceType = "bank_transfer" | "payroll" | "cash" | "manual"
+export type IncomeStatus = "received" | "planned"
 
 export type IncomeTransaction = {
   id: string
@@ -8,6 +9,7 @@ export type IncomeTransaction = {
   currency: string
   source_type: IncomeSourceType
   reference?: string | null
+  status: IncomeStatus
   received_at: string
   notes?: string | null
   tags?: string[]
@@ -28,6 +30,7 @@ export type FormState = {
   currency: string
   source_type: IncomeSourceType
   reference: string
+  status: IncomeStatus
   received_at: string
   notes: string
   tags: string
@@ -42,6 +45,7 @@ export type TransactionListItem = {
   currency: string
   source_type: IncomeSourceType
   reference?: string | null
+  status: IncomeStatus
   received_at: string
   is_reconciled: boolean
 }

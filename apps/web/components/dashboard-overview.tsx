@@ -26,6 +26,7 @@ type IncomeListItem = {
   currency: string
   source_type: string
   reference?: string | null
+  status: "received" | "planned"
   received_at: string
   is_reconciled: boolean
 }
@@ -53,6 +54,7 @@ export function DashboardOverview() {
   const [recentIncome, setRecentIncome] = useState<IncomeListItem[]>([])
   const [summary, setSummary] = useState<IncomeSummary | null>(null)
   const [monthSummary, setMonthSummary] = useState<IncomeSummary | null>(null)
+  const [plannedSummary, setPlannedSummary] = useState<IncomeSummary | null>(null)
   const [loadState, setLoadState] = useState<LoadState>("idle")
   const [refreshToken, setRefreshToken] = useState(0)
 
@@ -75,7 +77,7 @@ export function DashboardOverview() {
         from_date: monthStart.toISOString(),
       })
 
-      const [activeRes, archivedRes, incomeRes, summaryRes, monthRes] =
+      const [activeRes, archivedRes, incomeRes, summaryRes, monthRes, plannedRes] =
         await Promise.all([
           fetch(`${API_URL}/api/private/identity/?archived=false`, {
             credentials: "include",
@@ -84,40 +86,45 @@ export function DashboardOverview() {
             credentials: "include",
           }),
           fetch(
-            `${API_URL}/api/private/income/?page=1&page_size=6&sort_by=received_at&sort_dir=desc`,
+            `${API_URL}/api/private/income/?page=1&page_size=6&sort_by=received_at&sort_dir=desc&status=received`,
             {
               credentials: "include",
             }
           ),
-          fetch(`${API_URL}/api/private/income/summary`, {
+          fetch(`${API_URL}/api/private/income/summary?status=received`, {
             credentials: "include",
           }),
-          fetch(`${API_URL}/api/private/income/summary?${monthParams.toString()}`, {
+          fetch(`${API_URL}/api/private/income/summary?${monthParams.toString()}&status=received`, {
+            credentials: "include",
+          }),
+          fetch(`${API_URL}/api/private/income/summary?status=planned`, {
             credentials: "include",
           }),
         ])
 
-      if ([activeRes, archivedRes, incomeRes, summaryRes, monthRes].some((res) => res.status === 401)) {
+      if ([activeRes, archivedRes, incomeRes, summaryRes, monthRes, plannedRes].some((res) => res.status === 401)) {
         router.push("/signin")
         return
       }
 
-      if (![activeRes, archivedRes, incomeRes, summaryRes, monthRes].every((res) => res.ok)) {
+      if (![activeRes, archivedRes, incomeRes, summaryRes, monthRes, plannedRes].every((res) => res.ok)) {
         setLoadState("error")
         return
       }
 
-      const [activeData, archivedData, incomeData, summaryData, monthData] =
+      const [activeData, archivedData, incomeData, summaryData, monthData, plannedData] =
         (await Promise.all([
           activeRes.json(),
           archivedRes.json(),
           incomeRes.json(),
           summaryRes.json(),
           monthRes.json(),
+          plannedRes.json(),
         ])) as [
           CustomerListItem[],
           CustomerListItem[],
           IncomeListResponse,
+          IncomeSummary,
           IncomeSummary,
           IncomeSummary,
         ]
@@ -127,6 +134,7 @@ export function DashboardOverview() {
       setRecentIncome(incomeData.items)
       setSummary(summaryData)
       setMonthSummary(monthData)
+      setPlannedSummary(plannedData)
       setLoadState("ready")
     }
 
@@ -148,6 +156,8 @@ export function DashboardOverview() {
   const reconciledCount = summary?.reconciled_count ?? 0
   const totalIncome = summary?.total_amount ?? 0
   const monthIncome = monthSummary?.total_amount ?? 0
+  const plannedIncome = plannedSummary?.total_amount ?? 0
+  const plannedCount = plannedSummary?.count ?? 0
 
   const incomeBars = useMemo(() => {
     const recent = recentIncome.map((income) => income.amount)
@@ -221,7 +231,7 @@ export function DashboardOverview() {
                 Add invoice
               </Button>
             </div>
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-4">
               <div className="rounded-2xl border bg-background/60 p-4">
                 <p className="text-xs text-muted-foreground">Customers</p>
                 <p className="mt-2 text-2xl font-semibold">
@@ -245,6 +255,15 @@ export function DashboardOverview() {
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {(summary?.count ?? 0) - reconciledCount} pending
+                </p>
+              </div>
+              <div className="rounded-2xl border bg-background/60 p-4">
+                <p className="text-xs text-muted-foreground">Planned income</p>
+                <p className="mt-2 text-2xl font-semibold">
+                  {loadState === "ready" ? currencyFormatter.format(plannedIncome) : "—"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {plannedCount} planned entries
                 </p>
               </div>
             </div>

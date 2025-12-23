@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
-import type { IncomeSourceType } from "@/components/income/transactions-types"
+import type { IncomeSourceType, IncomeStatus } from "@/components/income/transactions-types"
 
 const sourceTypes: Array<{ value: IncomeSourceType | "all"; label: string }> = [
   { value: "all", label: "All" },
@@ -21,11 +21,19 @@ const sourceTypes: Array<{ value: IncomeSourceType | "all"; label: string }> = [
   { value: "manual", label: "Manual" },
 ]
 
+const statusOptions: Array<{ value: IncomeStatus | "all"; label: string }> = [
+  { value: "all", label: "All statuses" },
+  { value: "received", label: "Received" },
+  { value: "planned", label: "Planned" },
+]
+
 type TransactionsToolbarProps = {
   search: string
   onSearchChange: (value: string) => void
   sourceFilter: IncomeSourceType | "all"
   onSourceFilterChange: (value: IncomeSourceType | "all") => void
+  statusFilter: IncomeStatus | "all"
+  onStatusFilterChange: (value: IncomeStatus | "all") => void
   dateFrom: string
   dateTo: string
   minAmount: string
@@ -47,6 +55,8 @@ export function TransactionsToolbar({
   onSearchChange,
   sourceFilter,
   onSourceFilterChange,
+  statusFilter,
+  onStatusFilterChange,
   dateFrom,
   dateTo,
   minAmount,
@@ -89,6 +99,21 @@ export function TransactionsToolbar({
               {sourceTypes.map((source) => (
                 <SelectItem key={source.value} value={source.value}>
                   {source.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => onStatusFilterChange(value as IncomeStatus | "all")}
+          >
+            <SelectTrigger size="sm">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map((status) => (
+                <SelectItem key={status.value} value={status.value}>
+                  {status.label}
                 </SelectItem>
               ))}
             </SelectContent>
