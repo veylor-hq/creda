@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sidebar"
 import { AccountSettingsPanel } from "@/components/settings/account-settings-panel"
 import { SecuritySettingsPanel } from "@/components/settings/security-settings-panel"
+import { NotificationsSettingsPanel } from "@/components/settings/notifications-settings-panel"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   CreditCardIcon,
@@ -101,6 +102,10 @@ type SettingsDialogProps = {
     email: string
     email_verified: boolean
     full_name?: string | null
+    notification_settings?: {
+      email_on_signin: boolean
+      email_on_password_reset: boolean
+    }
   } | null
 }
 
@@ -171,6 +176,8 @@ export function SettingsDialog({
                 />
               ) : activeSectionId === "security" ? (
                 <SecuritySettingsPanel email={profile?.email} />
+              ) : activeSectionId === "notifications" ? (
+                <NotificationsSettingsPanel settings={profile?.notification_settings} />
               ) : (
                 <>
                   <div className="rounded-2xl border bg-muted/40 p-6">

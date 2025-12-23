@@ -39,6 +39,10 @@ type Profile = {
   email: string
   email_verified: boolean
   full_name?: string | null
+  notification_settings?: {
+    email_on_signin: boolean
+    email_on_password_reset: boolean
+  }
 }
 
 const settingsMenuItems: Array<{ id: SettingsSectionId; label: string }> = [

@@ -59,6 +59,35 @@ Ihor Savenko | Creda Security System
         """,
     )
 
+async def send_signin_alert_email(email: str):
+    await send_email(
+        email,
+        "New sign-in to your Creda account",
+        f"""
+We detected a new sign-in to your Creda account.
+
+If this was you, no action is needed.
+If this wasn't you, please reset your password.
+
+Kind Regards,
+Ihor Savenko | Creda Security System
+        """,
+    )
+
+async def send_password_reset_confirmation(email: str):
+    await send_email(
+        email,
+        "Your Creda password was reset",
+        f"""
+Your Creda password has been reset successfully.
+
+If you didn't do this, please reset your password again immediately.
+
+Kind Regards,
+Ihor Savenko | Creda Security System
+        """,
+    )
+
 
 @auth_router.post("/signup", response_model=UserOut)
 async def signup_event(payload: AuthSchema, background_tasks: BackgroundTasks) -> UserOut:
@@ -149,7 +178,11 @@ async def activate_otp(otp_activation_token: str):
     return {"message": "Account activated successfully"}
 
 @auth_router.post("/signin")
-async def signin_event(payload: AuthSchema, response: Response):
+async def signin_event(
+    payload: AuthSchema,
+    response: Response,
+    background_tasks: BackgroundTasks,
+):
     user = await User.find_one({"email": payload.email})
     if not user or not verify_password(payload.password, user.password):
         raise HTTPException(status_code=401, detail="Bad email or password")
@@ -176,7 +209,8 @@ async def signin_event(payload: AuthSchema, response: Response):
         path="/",
     )
 
-
+    if user.notification_settings and user.notification_settings.email_on_signin:
+        background_tasks.add_task(send_signin_alert_email, user.email)
 
     return {"ok": True}
 
@@ -218,7 +252,11 @@ async def request_password_reset(
 
 
 @auth_router.post("/password-reset/{token}")
-async def confirm_password_reset(token: str, payload: PasswordResetConfirm):
+async def confirm_password_reset(
+    token: str,
+    payload: PasswordResetConfirm,
+    background_tasks: BackgroundTasks,
+):
     reset_entry = await PasswordResetToken.find_one({"token": token})
     if not reset_entry:
         raise HTTPException(status_code=400, detail="Reset link is invalid or expired")
@@ -236,6 +274,9 @@ async def confirm_password_reset(token: str, payload: PasswordResetConfirm):
 
     reset_entry.used_at = datetime.datetime.utcnow()
     await reset_entry.save()
+
+    if user.notification_settings and user.notification_settings.email_on_password_reset:
+        background_tasks.add_task(send_password_reset_confirmation, user.email)
 
     return {"ok": True}
 

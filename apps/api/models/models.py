@@ -16,7 +16,12 @@ class User(Document):
     password: str
     email_verified: bool = False
     full_name: Optional[str] = None
+    notification_settings: "NotificationSettings" = Field(default_factory=lambda: NotificationSettings())
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class NotificationSettings(BaseModel):
+    email_on_signin: bool = False
+    email_on_password_reset: bool = False
 
 class Workspace(Document):
     name: str
