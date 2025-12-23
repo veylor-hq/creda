@@ -176,16 +176,32 @@ export function SidebarIconLayout() {
   }, [activeTabId])
 
   React.useEffect(() => {
-    if (!activeWorkspace?.id) {
-      return
+    async function selectWorkspace() {
+      if (!activeWorkspace?.id) {
+        return
+      }
+
+      const API_URL = process.env.NEXT_PUBLIC_API_URL
+      if (API_URL) {
+        await fetch(
+          `${API_URL}/api/private/workspace/${activeWorkspace.id}/select`,
+          {
+            method: "POST",
+            credentials: "include",
+          }
+        ).catch(() => null)
+      }
+
+      document.cookie = `X-Workspace-ID=${activeWorkspace.id}; path=/; max-age=${60 * 60 * 24 * 30}`
+      localStorage.setItem("active-workspace-id", activeWorkspace.id)
+      window.dispatchEvent(
+        new CustomEvent("app:workspace-changed", {
+          detail: { workspaceId: activeWorkspace.id },
+        })
+      )
     }
-    document.cookie = `X-Workspace-ID=${activeWorkspace.id}; path=/; max-age=${60 * 60 * 24 * 30}`
-    localStorage.setItem("active-workspace-id", activeWorkspace.id)
-    window.dispatchEvent(
-      new CustomEvent("app:workspace-changed", {
-        detail: { workspaceId: activeWorkspace.id },
-      })
-    )
+
+    selectWorkspace()
   }, [activeWorkspace?.id])
 
   React.useEffect(() => {

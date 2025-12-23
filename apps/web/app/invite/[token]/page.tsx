@@ -69,6 +69,13 @@ export default function InviteAcceptPage() {
       const data = await res.json().catch(() => null)
       const workspaceId = data?.workspace_id as string | undefined
       if (workspaceId) {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL
+        if (API_URL) {
+          await fetch(`${API_URL}/api/private/workspace/${workspaceId}/select`, {
+            method: "POST",
+            credentials: "include",
+          }).catch(() => null)
+        }
         document.cookie = `X-Workspace-ID=${workspaceId}; path=/`
         localStorage.setItem("active-workspace-id", workspaceId)
         window.dispatchEvent(

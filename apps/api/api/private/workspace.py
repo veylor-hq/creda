@@ -223,6 +223,29 @@ async def get_workspace(
     }
 
 
+@workspace_router.post("/{workspace_id}/select")
+async def select_workspace(
+    workspace_id: PydanticObjectId,
+    response: Response,
+    user: User = Depends(FastJWT().login_required),
+):
+    workspace = await Workspace.find_one(
+        {"_id": workspace_id, "is_archived": {"$ne": True}}
+    )
+    if workspace and not _user_in_workspace(workspace, user.id):
+        workspace = None
+    if not workspace:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+
+    response.set_cookie(
+        key="X-Workspace-ID",
+        value=str(workspace.id),
+        httponly=False,
+        path="/",
+    )
+    return {"ok": True, "workspace_id": str(workspace.id)}
+
+
 @workspace_router.patch("/{workspace_id}")
 async def update_workspace(
     workspace_id: PydanticObjectId,
