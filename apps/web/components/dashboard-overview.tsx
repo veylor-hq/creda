@@ -86,7 +86,7 @@ export function DashboardOverview() {
             credentials: "include",
           }),
           fetch(
-            `${API_URL}/api/private/income/?page=1&page_size=6&sort_by=received_at&sort_dir=desc&status=received`,
+            `${API_URL}/api/private/income/?page=1&page_size=4&sort_by=received_at&sort_dir=desc&status=received`,
             {
               credentials: "include",
             }
@@ -165,7 +165,7 @@ export function DashboardOverview() {
     return recent.map((amount) => Math.round((amount / max) * 100))
   }, [recentIncome])
 
-  const recentCustomers = activeCustomers.slice(0, 5)
+  const recentCustomers = activeCustomers.slice(0, 4)
 
   const statusBadge = (() => {
     if (loadState === "loading") return "Loading…"
@@ -271,7 +271,7 @@ export function DashboardOverview() {
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">Recent income amounts</p>
                 <span className="text-xs text-muted-foreground">
-                  Last 6 transactions · scaled by value
+                  Last 4 transactions · scaled by value
                 </span>
               </div>
               <div className="mt-4 flex h-16 items-end gap-2">
