@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useParams, usePathname, useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
+import { trackEvent } from "@/lib/analytics"
 
 type InviteState =
   | { status: "loading" }
@@ -84,6 +85,7 @@ export default function InviteAcceptPage() {
           })
         )
       }
+      trackEvent("workspace_invite_accepted", {})
       setState({ status: "accepted", workspaceId })
     }
 

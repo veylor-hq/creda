@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { trackEvent } from "@/lib/analytics"
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
@@ -43,6 +44,7 @@ export default function ForgotPasswordPage() {
       return
     }
 
+    trackEvent("password_reset_requested_page", {})
     setStatus("If the email exists, a reset link has been sent.")
   }
 

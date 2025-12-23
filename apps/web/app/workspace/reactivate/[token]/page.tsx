@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useParams, usePathname, useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
+import { trackEvent } from "@/lib/analytics"
 
 type ReactivateState =
   | { status: "loading" }
@@ -79,6 +80,7 @@ export default function WorkspaceReactivatePage() {
           })
         )
       }
+      trackEvent("workspace_reactivated", {})
       setState({ status: "success", workspaceId })
     }
 

@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { trackEvent } from "@/lib/analytics"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -77,6 +78,7 @@ export default function ResetPasswordPage() {
       return
     }
 
+    trackEvent("password_reset_completed", {})
     setIsDone(true)
   }
 
