@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 
 from beanie import PydanticObjectId
@@ -9,7 +9,7 @@ from pydantic import BaseModel, EmailStr
 from app.core.config import config
 from app.core.email import send_email
 from app.core.jwt import FastJWT
-from models.models import IncomeTransaction, Invoice, Person, User, Workspace, WorkspaceInvite
+from models.models import User, Workspace, WorkspaceInvite, WorkspaceReactivationToken
 
 workspace_router = APIRouter(prefix="/workspace")
 
@@ -90,6 +90,11 @@ def _user_in_workspace(workspace: Workspace, user_id: PydanticObjectId) -> bool:
 def _build_invite_url(token: str) -> str:
     base_url = (config.FRONTEND_URL or config.API_BASE_URL).rstrip("/")
     return f"{base_url}/invite/{token}"
+
+
+def _build_reactivation_url(token: str) -> str:
+    base_url = (config.FRONTEND_URL or config.API_BASE_URL).rstrip("/")
+    return f"{base_url}/workspace/reactivate/{token}"
 
 async def _normalize_workspace_links(workspace: Workspace) -> None:
     member_ids = _member_ids(workspace)
@@ -288,28 +293,25 @@ async def delete_workspace(
     if _owner_id(workspace) != str(user.id):
         raise HTTPException(status_code=403, detail="Only the owner can delete the workspace")
 
-    member_workspaces = len(
-        [
-            workspace
-            for workspace in await Workspace.find(
-                {"is_archived": {"$ne": True}}
-            ).to_list()
-            if _user_in_workspace(workspace, user.id)
-        ]
-    )
-    if member_workspaces <= 1:
-        raise HTTPException(status_code=400, detail="You cannot delete your only workspace")
-
-    customers_count = await Person.find({"workspace_id": workspace.id}).count()
-    income_count = await IncomeTransaction.find({"workspace_id": workspace.id}).count()
-    invoice_count = await Invoice.find({"workspace_id": workspace.id}).count()
-    if customers_count or income_count or invoice_count:
-        raise HTTPException(
-            status_code=400,
-            detail="Workspace has data and cannot be deleted",
-        )
-
     workspace.is_archived = True
+    token = str(uuid4())
+    reset_entry = WorkspaceReactivationToken(
+        workspace_id=workspace.id,
+        user_id=user.id,
+        token=token,
+        expires_at=datetime.utcnow() + timedelta(days=7),
+    )
+    await reset_entry.insert()
+
+    reactivation_url = _build_reactivation_url(token)
+    await send_email(
+        to=user.email,
+        subject=f"Reactivate {workspace.name}",
+        body=(
+            f"Your workspace \"{workspace.name}\" has been deactivated.\n"
+            f"Reactivate it here: {reactivation_url}\n"
+        ),
+    )
     await _normalize_workspace_links(workspace)
     await workspace.save()
     return {"ok": True}
@@ -507,3 +509,32 @@ async def leave_workspace(
     await _normalize_workspace_links(workspace)
     await workspace.save()
     return {"ok": True}
+
+
+@workspace_router.post("/reactivate/{token}")
+async def reactivate_workspace(
+    token: str,
+    user: User = Depends(FastJWT().login_required),
+):
+    token_entry = await WorkspaceReactivationToken.find_one({"token": token})
+    if not token_entry:
+        raise HTTPException(status_code=404, detail="Reactivation link is invalid")
+    if token_entry.used_at:
+        raise HTTPException(status_code=400, detail="Reactivation link is invalid")
+    if token_entry.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Reactivation link is invalid")
+    if str(token_entry.user_id) != str(user.id):
+        raise HTTPException(status_code=403, detail="Reactivation link is invalid")
+
+    workspace = await Workspace.find_one({"_id": token_entry.workspace_id})
+    if not workspace:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+
+    workspace.is_archived = False
+    await _normalize_workspace_links(workspace)
+    await workspace.save()
+
+    token_entry.used_at = datetime.utcnow()
+    await token_entry.save()
+
+    return {"ok": True, "workspace_id": str(workspace.id)}

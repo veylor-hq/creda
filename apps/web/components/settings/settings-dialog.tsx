@@ -27,6 +27,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { AccountSettingsPanel } from "@/components/settings/account-settings-panel"
+import { SecuritySettingsPanel } from "@/components/settings/security-settings-panel"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   CreditCardIcon,
@@ -168,6 +169,8 @@ export function SettingsDialog({
                   emailVerified={profile?.email_verified}
                   fullName={profile?.full_name ?? ""}
                 />
+              ) : activeSectionId === "security" ? (
+                <SecuritySettingsPanel email={profile?.email} />
               ) : (
                 <>
                   <div className="rounded-2xl border bg-muted/40 p-6">

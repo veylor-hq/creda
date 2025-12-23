@@ -1,11 +1,12 @@
 import datetime
 from app.core.jwt import FastJWT
 from app.core.config import config
-from models.models import OTPActivationModel, User, Workspace
+from models.models import OTPActivationModel, PasswordResetToken, User, Workspace
 from app.core.password_utils import generate_password, get_password_hash, verify_password
 from beanie import PydanticObjectId
-from fastapi import APIRouter, HTTPException, Request, BackgroundTasks, Response
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, HTTPException, Request, BackgroundTasks, Response, Depends
+from pydantic import BaseModel, EmailStr, Field
+from uuid import uuid4
 from app.core.email import send_email
 
 class AuthSchema(BaseModel):
@@ -35,6 +36,23 @@ Click the link below to verify your email address
 
 
 If you didn't sign up for Creda, you can ignore this email.
+
+Kind Regards,
+Ihor Savenko | Creda Security System
+        """,
+    )
+
+async def send_password_reset_email(email: str, reset_link: str):
+    await send_email(
+        email,
+        "Reset your Creda password",
+        f"""
+We received a request to reset your password.
+
+Click the link below to set a new password:
+{reset_link}
+
+If you didn't request this, you can ignore this email.
 
 Kind Regards,
 Ihor Savenko | Creda Security System
@@ -160,6 +178,78 @@ async def signin_event(payload: AuthSchema, response: Response):
 
 
 
+    return {"ok": True}
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    password: str = Field(min_length=8, max_length=72)
+
+
+class PasswordChangePayload(BaseModel):
+    current_password: str = Field(min_length=8, max_length=72)
+    new_password: str = Field(min_length=8, max_length=72)
+
+
+@auth_router.post("/password-reset/request")
+async def request_password_reset(
+    payload: PasswordResetRequest,
+    background_tasks: BackgroundTasks,
+):
+    user = await User.find_one({"email": payload.email})
+    if not user:
+        return {"ok": True}
+
+    token = str(uuid4())
+    reset_entry = PasswordResetToken(
+        user_id=user.id,
+        token=token,
+        expires_at=datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+    )
+    await reset_entry.insert()
+
+    base_url = (config.FRONTEND_URL or config.API_BASE_URL).rstrip("/")
+    reset_link = f"{base_url}/reset-password/{token}"
+    background_tasks.add_task(send_password_reset_email, user.email, reset_link)
+    return {"ok": True}
+
+
+@auth_router.post("/password-reset/{token}")
+async def confirm_password_reset(token: str, payload: PasswordResetConfirm):
+    reset_entry = await PasswordResetToken.find_one({"token": token})
+    if not reset_entry:
+        raise HTTPException(status_code=400, detail="Reset link is invalid or expired")
+    if reset_entry.used_at:
+        raise HTTPException(status_code=400, detail="Reset link is invalid or expired")
+    if reset_entry.expires_at < datetime.datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Reset link is invalid or expired")
+
+    user = await User.get(reset_entry.user_id)
+    if not user:
+        raise HTTPException(status_code=400, detail="Reset link is invalid or expired")
+
+    user.password = get_password_hash(payload.password)
+    await user.save()
+
+    reset_entry.used_at = datetime.datetime.utcnow()
+    await reset_entry.save()
+
+    return {"ok": True}
+
+
+@auth_router.post("/password/change")
+async def change_password(
+    payload: PasswordChangePayload,
+    user: User = Depends(FastJWT().login_required),
+):
+    if not verify_password(payload.current_password, user.password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    user.password = get_password_hash(payload.new_password)
+    await user.save()
     return {"ok": True}
 
 

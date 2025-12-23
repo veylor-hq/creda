@@ -129,29 +129,6 @@ export function AccountSettingsPanel({
           </div>
         </div>
       </div>
-      <div className="rounded-2xl border bg-muted/40 p-6">
-        <p className="text-sm font-medium">Change password</p>
-        <p className="text-xs text-muted-foreground">
-          Placeholder flow, frontend-only for now.
-        </p>
-        <div className="mt-4 grid gap-3">
-          <div className="grid gap-2">
-            <Label htmlFor="current-password">Current password</Label>
-            <Input id="current-password" type="password" placeholder="••••••••" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="new-password">New password</Label>
-            <Input id="new-password" type="password" placeholder="••••••••" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="confirm-password">Confirm new password</Label>
-            <Input id="confirm-password" type="password" placeholder="••••••••" />
-          </div>
-          <div className="flex justify-end">
-            <Button size="sm">Update password</Button>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

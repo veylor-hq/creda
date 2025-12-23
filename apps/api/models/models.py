@@ -50,6 +50,38 @@ class OTPActivationModel(Document):
     otp: str
     expires_at: datetime
 
+class PasswordResetToken(Document):
+    class Settings:
+        name = "password_reset_tokens"
+        indexes = [
+            "token",
+            "user_id",
+            "expires_at",
+        ]
+
+    user_id: PydanticObjectId
+    token: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: datetime
+    used_at: Optional[datetime] = None
+
+class WorkspaceReactivationToken(Document):
+    class Settings:
+        name = "workspace_reactivation_tokens"
+        indexes = [
+            "token",
+            "workspace_id",
+            "user_id",
+            "expires_at",
+        ]
+
+    workspace_id: PydanticObjectId
+    user_id: PydanticObjectId
+    token: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: datetime
+    used_at: Optional[datetime] = None
+
 class Address(BaseModel):
     line1: Optional[str] = None
     line2: Optional[str] = None

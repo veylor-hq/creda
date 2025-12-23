@@ -209,7 +209,7 @@ export function WorkspaceManagerDialog({
 
     if (!res.ok) {
       const data = await res.json().catch(() => null)
-      setNotice(data?.detail ?? "Failed to delete workspace.")
+      setNotice(data?.detail ?? "Failed to deactivate workspace.")
       return
     }
 
@@ -385,194 +385,227 @@ export function WorkspaceManagerDialog({
                 </div>
               ) : (
                 <>
-                  <div className="rounded-2xl border bg-muted/30 p-4">
-                    <p className="text-sm font-medium">Workspace name</p>
-                    <p className="text-xs text-muted-foreground">
-                      Rename your workspace.
-                    </p>
-                    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <Input
-                        value={renameValue}
-                        onChange={(event) => setRenameValue(event.target.value)}
-                        disabled={!isOwner}
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleRename}
-                        disabled={!isOwner || isBusy}
-                      >
-                        Save
-                      </Button>
-                    </div>
-                    {!isOwner && (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Only the workspace owner can rename.
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="rounded-2xl border bg-muted/30 p-4">
-                    <p className="text-sm font-medium">Members</p>
-                    <p className="text-xs text-muted-foreground">
-                      Manage access to this workspace.
-                    </p>
-                    <div className="mt-4 space-y-2">
-                      {members.map((member) => (
-                        <div
-                          key={member.id}
-                          className="flex items-center justify-between rounded-xl border bg-background/60 px-3 py-2 text-sm"
-                        >
-                          <div>
-                            <p className="font-medium">
-                              {member.full_name || member.email}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {member.email}
-                            </p>
-                          </div>
-                          {details.owner_id === member.id ? (
-                            <Badge variant="outline">Owner</Badge>
-                          ) : (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={!isOwner}
-                                >
-                                  Remove
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Remove member?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This user will lose access to the workspace.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleRemoveMember(member.id)}
-                                  >
-                                    Remove
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    {!isOwner && (
-                      <div className="mt-4">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-destructive"
-                              disabled={isBusy}
-                            >
-                              Leave workspace
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Leave this workspace?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                You will lose access to all data in this workspace.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction variant="destructive" onClick={handleLeaveWorkspace}>
-                                Leave
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="rounded-2xl border bg-muted/30 p-4">
-                    <p className="text-sm font-medium">Invite members</p>
-                    <p className="text-xs text-muted-foreground">
-                      Only owners can invite new members.
-                    </p>
-                    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <Input
-                        placeholder="email@company.com"
-                        value={inviteEmail}
-                        onChange={(event) => setInviteEmail(event.target.value)}
-                        disabled={!isOwner}
-                      />
-                      <Button
-                        size="sm"
-                        onClick={handleInvite}
-                        disabled={!isOwner || isBusy}
-                      >
-                        Send invite
-                      </Button>
-                    </div>
-                    {invites.length > 0 && (
-                      <div className="mt-4 space-y-2">
-                        {invites.map((invite) => (
-                          <div
-                            key={invite.id}
-                            className="flex items-center justify-between rounded-xl border bg-background/60 px-3 py-2 text-sm"
-                          >
-                            <span>{invite.email}</span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleRevokeInvite(invite.id)}
-                              disabled={!isOwner}
-                            >
-                              Revoke
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="rounded-2xl border bg-muted/30 p-4">
-                    <p className="text-sm font-medium">Danger zone</p>
-                    <p className="text-xs text-muted-foreground">
-                      Delete this workspace (soft delete).
-                    </p>
-                    <div className="mt-4">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                  {isOwner ? (
+                    <>
+                      <div className="rounded-2xl border bg-muted/30 p-4">
+                        <p className="text-sm font-medium">Workspace name</p>
+                        <p className="text-xs text-muted-foreground">
+                          Rename your workspace.
+                        </p>
+                        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <Input
+                            value={renameValue}
+                            onChange={(event) => setRenameValue(event.target.value)}
+                            disabled={!isOwner}
+                          />
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-destructive"
+                            onClick={handleRename}
                             disabled={!isOwner || isBusy}
                           >
-                            Delete workspace
+                            Save
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete workspace?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will archive the workspace.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction variant="destructive" onClick={handleDelete}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border bg-muted/30 p-4">
+                        <p className="text-sm font-medium">Members</p>
+                        <p className="text-xs text-muted-foreground">
+                          Manage access to this workspace.
+                        </p>
+                        <div className="mt-4 space-y-2">
+                          {members.map((member) => (
+                            <div
+                              key={member.id}
+                              className="flex items-center justify-between rounded-xl border bg-background/60 px-3 py-2 text-sm"
+                            >
+                              <div>
+                                <p className="font-medium">
+                                  {member.full_name || member.email}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {member.email}
+                                </p>
+                              </div>
+                              {details.owner_id === member.id ? (
+                                <Badge variant="outline">Owner</Badge>
+                              ) : (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={!isOwner}
+                                    >
+                                      Remove
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Remove member?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This user will lose access to the workspace.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleRemoveMember(member.id)}
+                                      >
+                                        Remove
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border bg-muted/30 p-4">
+                        <p className="text-sm font-medium">Invite members</p>
+                        <p className="text-xs text-muted-foreground">
+                          Only owners can invite new members.
+                        </p>
+                        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <Input
+                            placeholder="email@company.com"
+                            value={inviteEmail}
+                            onChange={(event) => setInviteEmail(event.target.value)}
+                            disabled={!isOwner}
+                          />
+                          <Button
+                            size="sm"
+                            onClick={handleInvite}
+                            disabled={!isOwner || isBusy}
+                          >
+                            Send invite
+                          </Button>
+                        </div>
+                        {invites.length > 0 && (
+                          <div className="mt-4 space-y-2">
+                            {invites.map((invite) => (
+                              <div
+                                key={invite.id}
+                                className="flex items-center justify-between rounded-xl border bg-background/60 px-3 py-2 text-sm"
+                              >
+                                <span>{invite.email}</span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleRevokeInvite(invite.id)}
+                                  disabled={!isOwner}
+                                >
+                                  Revoke
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="rounded-2xl border bg-muted/30 p-4">
+                        <p className="text-sm font-medium">Danger zone</p>
+                        <p className="text-xs text-muted-foreground">
+                          Deactivate this workspace (you can reactivate via email).
+                        </p>
+                        <div className="mt-4">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive"
+                                disabled={!isOwner || isBusy}
+                              >
+                                Deactivate workspace
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Deactivate workspace?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will archive the workspace and email you a reactivation link.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction variant="destructive" onClick={handleDelete}>
+                                  Deactivate
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="rounded-2xl border bg-muted/30 p-4">
+                        <p className="text-sm font-medium">Members</p>
+                        <p className="text-xs text-muted-foreground">
+                          Workspace members.
+                        </p>
+                        <div className="mt-4 space-y-2">
+                          {members.map((member) => (
+                            <div
+                              key={member.id}
+                              className="flex items-center justify-between rounded-xl border bg-background/60 px-3 py-2 text-sm"
+                            >
+                              <div>
+                                <p className="font-medium">
+                                  {member.full_name || member.email}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {member.email}
+                                </p>
+                              </div>
+                              {details.owner_id === member.id && (
+                                <Badge variant="outline">Owner</Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border bg-muted/30 p-4">
+                        <p className="text-sm font-medium">Leave workspace</p>
+                        <p className="text-xs text-muted-foreground">
+                          You will lose access to workspace data.
+                        </p>
+                        <div className="mt-4">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive"
+                                disabled={isBusy}
+                              >
+                                Leave workspace
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Leave this workspace?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  You will lose access to all data in this workspace.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction variant="destructive" onClick={handleLeaveWorkspace}>
+                                  Leave
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>

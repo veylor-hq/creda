@@ -98,6 +98,9 @@ export function SigninForm({ className, ...props }: React.ComponentProps<"div">)
               <Field>
                 <FieldLabel htmlFor="password">Password</FieldLabel>
                 <Input id="password" name="password" type="password" required />
+                <FieldDescription className="text-right">
+                  <a href="/forgot-password">Forgot password?</a>
+                </FieldDescription>
               </Field>
               <Field>
                 <Button type="submit">Sign In</Button>
