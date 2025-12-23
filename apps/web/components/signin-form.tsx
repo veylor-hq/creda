@@ -26,6 +26,7 @@ export function SigninForm({ className, ...props }: React.ComponentProps<"div">)
   const router = useRouter()
   const searchParams = useSearchParams()
   const registered = searchParams.get("registered") 
+  const nextPath = searchParams.get("next")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -48,8 +49,9 @@ export function SigninForm({ className, ...props }: React.ComponentProps<"div">)
     )
 
     if (response.ok) {
+      const target = nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard"
       trackEvent("user_signed_in", { method: "password" })
-      router.push('/dashboard')
+      router.push(target)
     } else {
       const data = await response.json()
       setErrorMessage(data.detail || 'An error occurred during signin.')

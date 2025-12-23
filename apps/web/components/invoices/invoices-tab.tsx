@@ -39,6 +39,7 @@ export function InvoicesTab() {
   const [formState, setFormState] = useState<InvoiceFormState>(emptyInvoiceForm)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [refreshToken, setRefreshToken] = useState(0)
   const [notice, setNotice] = useState<{ tone: "success" | "error"; message: string } | null>(
     null
   )
@@ -69,7 +70,7 @@ export function InvoicesTab() {
     }
 
     loadPeople()
-  }, [router])
+  }, [router, refreshToken])
 
   useEffect(() => {
     const shouldOpen = localStorage.getItem("open-invoice-dialog")
@@ -138,7 +139,17 @@ export function InvoicesTab() {
     }
 
     loadInvoices()
-  }, [router, page, pageSize, statusFilter, sortValue])
+  }, [router, page, pageSize, statusFilter, sortValue, refreshToken])
+
+  useEffect(() => {
+    const handleWorkspaceChange = () => {
+      setRefreshToken((prev) => prev + 1)
+    }
+
+    window.addEventListener("app:workspace-changed", handleWorkspaceChange)
+    return () =>
+      window.removeEventListener("app:workspace-changed", handleWorkspaceChange)
+  }, [])
 
   const filteredInvoices = useMemo(() => {
     const query = search.trim().toLowerCase()

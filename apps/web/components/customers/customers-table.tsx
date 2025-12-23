@@ -52,6 +52,7 @@ export function CustomersTable() {
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isReactivating, setIsReactivating] = useState(false)
+  const [refreshToken, setRefreshToken] = useState(0)
 
   useEffect(() => {
     const stored = localStorage.getItem(visibleColumnsStorageKey)
@@ -127,7 +128,17 @@ export function CustomersTable() {
     }
 
     loadCustomers()
-  }, [router, statusFilter])
+  }, [router, statusFilter, refreshToken])
+
+  useEffect(() => {
+    const handleWorkspaceChange = () => {
+      setRefreshToken((prev) => prev + 1)
+    }
+
+    window.addEventListener("app:workspace-changed", handleWorkspaceChange)
+    return () =>
+      window.removeEventListener("app:workspace-changed", handleWorkspaceChange)
+  }, [])
 
   const filteredCustomers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()

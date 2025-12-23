@@ -83,8 +83,8 @@ async def signup_event(payload: AuthSchema, background_tasks: BackgroundTasks) -
     # create workspace for user
     workspace: Workspace = Workspace(
         name="Workspace of " + payload.email.split("@")[0],
-        owner=user.id,
-        members=[user.id],
+        owner=user,
+        members=[user],
     )
     await workspace.insert()
 

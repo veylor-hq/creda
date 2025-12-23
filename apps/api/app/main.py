@@ -10,7 +10,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from beanie import init_beanie
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-from models.models import IncomeTransaction, Invoice, OTPActivationModel, Person, User, Workspace
+from models.models import IncomeTransaction, Invoice, OTPActivationModel, Person, User, Workspace, WorkspaceInvite
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.router import router as api_router
@@ -40,6 +40,7 @@ async def lifespan(app: FastAPI):
         document_models=[
             User,
             Workspace,
+            WorkspaceInvite,
             OTPActivationModel,
             Person,
             IncomeTransaction,

@@ -69,6 +69,7 @@ export function TransactionsTab() {
   const [formState, setFormState] = useState(emptyFormState)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [refreshToken, setRefreshToken] = useState(0)
 
   useEffect(() => {
     async function loadPeople() {
@@ -99,7 +100,7 @@ export function TransactionsTab() {
     }
 
     loadPeople()
-  }, [router])
+  }, [router, refreshToken])
 
   useEffect(() => {
     async function loadInvoices() {
@@ -158,7 +159,7 @@ export function TransactionsTab() {
     }
 
     loadInvoices()
-  }, [router])
+  }, [router, refreshToken])
 
   useEffect(() => {
     const shouldOpen = localStorage.getItem("open-income-dialog")
@@ -252,7 +253,18 @@ export function TransactionsTab() {
     maxAmount,
     reconciledFilter,
     sortValue,
+    refreshToken,
   ])
+
+  useEffect(() => {
+    const handleWorkspaceChange = () => {
+      setRefreshToken((prev) => prev + 1)
+    }
+
+    window.addEventListener("app:workspace-changed", handleWorkspaceChange)
+    return () =>
+      window.removeEventListener("app:workspace-changed", handleWorkspaceChange)
+  }, [])
 
   const filteredTransactions = useMemo(() => {
     const query = search.trim().toLowerCase()

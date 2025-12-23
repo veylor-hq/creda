@@ -54,6 +54,7 @@ export function DashboardOverview() {
   const [summary, setSummary] = useState<IncomeSummary | null>(null)
   const [monthSummary, setMonthSummary] = useState<IncomeSummary | null>(null)
   const [loadState, setLoadState] = useState<LoadState>("idle")
+  const [refreshToken, setRefreshToken] = useState(0)
 
   useEffect(() => {
     async function loadStats() {
@@ -130,7 +131,17 @@ export function DashboardOverview() {
     }
 
     loadStats()
-  }, [router])
+  }, [router, refreshToken])
+
+  useEffect(() => {
+    const handleWorkspaceChange = () => {
+      setRefreshToken((prev) => prev + 1)
+    }
+
+    window.addEventListener("app:workspace-changed", handleWorkspaceChange)
+    return () =>
+      window.removeEventListener("app:workspace-changed", handleWorkspaceChange)
+  }, [])
 
 
   const totalCustomers = activeCustomers.length + archivedCustomers.length

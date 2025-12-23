@@ -36,6 +36,8 @@ import { TransactionsTab } from "@/components/income/transactions-tab"
 import { InvoicesTab } from "@/components/invoices/invoices-tab"
 import { SidebarProfileMenu } from "@/components/sidebar-profile-menu"
 import { CommandLauncher } from "@/components/command-launcher"
+import { WorkspaceManagerDialog } from "@/components/workspaces/workspace-manager-dialog"
+import { WorkspaceCreateAlert } from "@/components/workspaces/workspace-create-alert"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   CreditCardIcon,
@@ -46,7 +48,6 @@ import {
   UserIcon,
 } from "@hugeicons/core-free-icons"
 import { Badge } from "./ui/badge"
-import { AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialog } from "./ui/alert-dialog"
 
 type AppTabId = "dashboard" | "customers" | "income" | "invoices"
 
@@ -94,40 +95,57 @@ export function SidebarIconLayout() {
   const [workspaces, setWorkspaces] = React.useState<WorkspaceOption[]>([])
   const [activeWorkspace, setActiveWorkspace] =
     React.useState<WorkspaceOption | null>(null)
-  const [isAddWorkspaceOpen, setIsAddWorkspaceOpen] = React.useState(false)
+  const [workspaceDialogOpen, setWorkspaceDialogOpen] = React.useState(false)
+  const [workspaceCreateOpen, setWorkspaceCreateOpen] = React.useState(false)
   const [commandOpen, setCommandOpen] = React.useState(false)
   const [activeTabId, setActiveTabId] = React.useState<AppTabId>(
     "dashboard"
   )
 
   React.useEffect(() => {
-    async function loadWorkspaces() {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL
+    const storedWorkspace = localStorage.getItem("active-workspace-id")
+    if (storedWorkspace) {
+      setActiveWorkspace((current) => current ?? { id: storedWorkspace, name: "Workspace" })
+    }
+  }, [])
 
-      if (!API_URL) {
-        return
-      }
+  const refreshWorkspaces = React.useCallback(async () => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-      const res = await fetch(`${API_URL}/api/private/workspace/`, {
-        credentials: "include",
-      })
-
-      if (res.status === 401) {
-        router.push("/signin")
-        return
-      }
-
-      if (!res.ok) {
-        return
-      }
-
-      const data = (await res.json()) as WorkspaceOption[]
-      setWorkspaces(data)
-      setActiveWorkspace((current) => current ?? data[0] ?? null)
+    if (!API_URL) {
+      return
     }
 
-    loadWorkspaces()
+    const res = await fetch(`${API_URL}/api/private/workspace/`, {
+      credentials: "include",
+    })
+
+    if (res.status === 401) {
+      router.push("/signin")
+      return
+    }
+
+    if (!res.ok) {
+      return
+    }
+
+    const data = (await res.json()) as WorkspaceOption[]
+    setWorkspaces(data)
+    setActiveWorkspace((current) => {
+      if (current && data.find((workspace) => workspace.id === current.id)) {
+        return data.find((workspace) => workspace.id === current.id) ?? current
+      }
+      const storedWorkspace = localStorage.getItem("active-workspace-id")
+      if (storedWorkspace) {
+        return data.find((workspace) => workspace.id === storedWorkspace) ?? data[0] ?? null
+      }
+      return data[0] ?? null
+    })
   }, [router])
+
+  React.useEffect(() => {
+    refreshWorkspaces()
+  }, [refreshWorkspaces])
 
   React.useEffect(() => {
     const stored = localStorage.getItem("sidebar-active-tab")
@@ -156,6 +174,19 @@ export function SidebarIconLayout() {
   React.useEffect(() => {
     localStorage.setItem("sidebar-active-tab", activeTabId)
   }, [activeTabId])
+
+  React.useEffect(() => {
+    if (!activeWorkspace?.id) {
+      return
+    }
+    document.cookie = `X-Workspace-ID=${activeWorkspace.id}; path=/; max-age=${60 * 60 * 24 * 30}`
+    localStorage.setItem("active-workspace-id", activeWorkspace.id)
+    window.dispatchEvent(
+      new CustomEvent("app:workspace-changed", {
+        detail: { workspaceId: activeWorkspace.id },
+      })
+    )
+  }, [activeWorkspace?.id])
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -283,7 +314,15 @@ export function SidebarIconLayout() {
                   <DropdownMenuItem
                     onSelect={(event) => {
                       event.preventDefault()
-                      setIsAddWorkspaceOpen(true)
+                      setWorkspaceDialogOpen(true)
+                    }}
+                  >
+                    Manage workspace
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={(event) => {
+                      event.preventDefault()
+                      setWorkspaceCreateOpen(true)
                     }}
                   >
                     Add new workspace
@@ -346,8 +385,8 @@ export function SidebarIconLayout() {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-3 px-4">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-3">
             <SidebarTrigger className="-ml-1" />
             <div className="flex flex-col">
               <span className="text-sm font-medium">{activeTab.label}</span>
@@ -359,20 +398,23 @@ export function SidebarIconLayout() {
         </header>
         <ActiveContent />
       </SidebarInset>
-      <AlertDialog
-        open={isAddWorkspaceOpen}
-        onOpenChange={setIsAddWorkspaceOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Coming soon!</AlertDialogTitle>
-            <AlertDialogDescription>
-              Workspace creation is on the way.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogAction>Got it</AlertDialogAction>
-        </AlertDialogContent>
-      </AlertDialog>
+      <WorkspaceManagerDialog
+        open={workspaceDialogOpen}
+        activeWorkspace={activeWorkspace}
+        workspaces={workspaces}
+        onOpenChange={setWorkspaceDialogOpen}
+        onWorkspaceChange={setActiveWorkspace}
+        onRefresh={refreshWorkspaces}
+      />
+      <WorkspaceCreateAlert
+        open={workspaceCreateOpen}
+        onOpenChange={setWorkspaceCreateOpen}
+        onCreated={(workspace) => {
+          refreshWorkspaces().then(() => {
+            setActiveWorkspace(workspace)
+          })
+        }}
+      />
       <CommandLauncher
         open={commandOpen}
         onOpenChange={setCommandOpen}

@@ -21,10 +21,26 @@ class User(Document):
 class Workspace(Document):
     name: str
     owner: Link[User]
-    members: List[Link[User]] = [
-        # owner will be added automatically
-    ]
+    members: List[Link[User]] = Field(default_factory=list)
+    is_archived: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class WorkspaceInvite(Document):
+    workspace_id: PydanticObjectId
+    email: EmailStr
+    invited_by: PydanticObjectId
+    token: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    accepted_at: Optional[datetime] = None
+    accepted_by: Optional[PydanticObjectId] = None
+
+    class Settings:
+        name = "workspace_invites"
+        indexes = [
+            "workspace_id",
+            "email",
+            "token",
+        ]
 
 class OTPActivationModel(Document):
     class Settings:
